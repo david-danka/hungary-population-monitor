@@ -16,18 +16,19 @@ class Settings:
 
     Attributes:
         base_dir: Absolute path to the project root directory.
-        gov_url: Source URL for Hungarian population datasets.
         raw_excels: Directory where raw Excel files are stored.
         processed_excels: Directory for processed dataset outputs.
     """
 
-    base_dir: Path = Path(__file__).resolve().parent.parent
+    base_dir: Path = Path(__file__).resolve().parent.parent.parent
 
-    gov_url: str = "https://kormany.hu/nyilvantartasok/statisztika/lakossagi-szamadatok"
+    raw_excels: Path = base_dir / "data/raw/excels"
 
-    raw_excels: Path = base_dir / "data" / "raw" / "excels"
+    raw_settlement_coords: Path = base_dir / "data/raw/coordinates"
 
-    processed_excels: Path = base_dir / "data" / "processed" / "excels"
+    processed_excels: Path = base_dir / "data/processed/excels"
+
+    processed_settlement_coords: Path = base_dir / "data/processed/coordinates"
 
 
 settings = Settings()

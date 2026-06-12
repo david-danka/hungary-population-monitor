@@ -10,7 +10,7 @@ Functions:
     load_workbook: Load an Excel workbook into a pandas ExcelFile object.
     download_excel_file: Download a remote Excel file to the raw data directory.
     is_population_excel: Validate whether a workbook contains population data.
-    main: Entry point for collecting population Excel files.
+    collect_population_datasets: Entry point for collecting population Excel files.
 """
 
 from io import BytesIO
@@ -20,7 +20,9 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from settings import settings
+from hpm.settings import settings
+
+GOV_URL = "https://kormany.hu/nyilvantartasok/statisztika/lakossagi-szamadatok"
 
 
 def get_excel_urls(url: str) -> list[str]:
@@ -121,9 +123,9 @@ def is_population_excel(xls: pd.ExcelFile) -> bool:
     return df.shape[0] > 1000
 
 
-def main():
+def collect_population_datasets():
     """Download all population Excel files from the government page."""
-    excel_urls = get_excel_urls(settings.gov_url)
+    excel_urls = get_excel_urls(GOV_URL)
     for url in excel_urls:
         xl = load_workbook(url)
         if not is_population_excel(xl):
@@ -132,4 +134,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    collect_population_datasets()
