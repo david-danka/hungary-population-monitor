@@ -87,10 +87,10 @@ def download_excel_file(excel_url: str) -> Path:
     Raises:
         requests.HTTPError: If the HTTP request for the file fails.
     """
-    settings.raw_excels.mkdir(parents=True, exist_ok=True)
+    settings.raw_population.mkdir(parents=True, exist_ok=True)
 
     filename = excel_url.split("/")[-1]
-    filepath = settings.raw_excels / filename
+    filepath = settings.raw_population / filename
 
     if filepath.exists():
         print(f"Skipping {filename}")

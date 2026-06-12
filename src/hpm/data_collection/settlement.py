@@ -31,12 +31,12 @@ def download_geonames_hungary() -> Path:
     Returns:
         Path to the extracted HU.txt file in the raw storage directory.
     """
-    settings.raw_settlement_coords.mkdir(
+    settings.raw_settlements.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    target = settings.raw_settlement_coords / "HU.txt"
+    target = settings.raw_settlements / "HU.txt"
 
     if target.exists():
         print("Skipping HU.txt")
@@ -51,7 +51,7 @@ def download_geonames_hungary() -> Path:
     with ZipFile(BytesIO(response.content)) as zf:
         zf.extract(
             member="HU.txt",
-            path=settings.raw_settlement_coords,
+            path=settings.raw_settlements,
         )
 
     print("Downloaded and extracted HU.txt")
