@@ -22,13 +22,13 @@ class Settings:
 
     base_dir: Path = Path(__file__).resolve().parent.parent.parent
 
-    raw_excels: Path = base_dir / "data/raw/excels"
+    raw_excels: Path = base_dir / "data/raw/population"
 
-    raw_settlement_coords: Path = base_dir / "data/raw/coordinates"
+    raw_settlement_coords: Path = base_dir / "data/raw/settlements"
 
-    processed_excels: Path = base_dir / "data/processed/excels"
+    processed_excels: Path = base_dir / "data/processed/population"
 
-    processed_settlement_coords: Path = base_dir / "data/processed/coordinates"
+    processed_settlement_coords: Path = base_dir / "data/processed/settlements"
 
 
 settings = Settings()
