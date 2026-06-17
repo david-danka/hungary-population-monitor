@@ -1,0 +1,1 @@
+.\.venv\Scripts\python.exe -m nbconvert --to html --execute notebooks/*.ipynb --output-dir docs/notebooks/
