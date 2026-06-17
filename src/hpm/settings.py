@@ -26,9 +26,5 @@ class Settings:
 
     raw_settlements: Path = base_dir / "data/raw/settlements"
 
-    processed_population: Path = base_dir / "data/processed/population"
-
-    processed_settlements: Path = base_dir / "data/processed/settlements"
-
 
 settings = Settings()
