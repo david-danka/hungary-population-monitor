@@ -3,6 +3,7 @@ import re
 import pandas as pd
 
 from hpm.settings import settings
+from hpm.transform.validate_settlement import validate_settlement_data
 
 
 class GeoNamesSchema:
@@ -112,5 +113,7 @@ def transform_settlement_data() -> pd.DataFrame:
     filtered = filtered.drop_duplicates(subset="name").reset_index(drop=True)
 
     filtered = filtered.astype(schema.dtypes)
+
+    validate_settlement_data(filtered, schema.output_columns, source="HU.txt")
 
     return filtered
