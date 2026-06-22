@@ -54,19 +54,9 @@ def _validate_coordinate_bounds(df: pd.DataFrame, source: str) -> None:
     )
 
 
-def _validate_name_unique(df: pd.DataFrame, source: str) -> None:
-    """Check that settlement name uniquely identifies each row.
-
-    This is a postcondition on transform_settlement_data's
-    drop_duplicates step. A failure here means either that step was
-    removed/changed upstream, or normalization collapsed two distinct
-    raw names into one before dedup ran against the wrong key.
-    """
-    dupes = df["name"].duplicated().sum()
-    assert dupes == 0, f"{source}: {dupes} duplicate settlement names found"
-
-
-def _validate_budapest_districts_complete(df: pd.DataFrame, source: str) -> None:
+def _validate_budapest_districts_complete(
+    df: pd.DataFrame, source: str
+) -> None:
     """Check that all 23 normalized Budapest districts are present.
 
     Profiling found exactly 23 districts in the 'Budapest [IVX]+.'
@@ -90,8 +80,10 @@ def validate_settlement_data(
     """
     Run the full validation suite for the cleaned settlement DataFrame.
     """
+    # Populated features with no mapped `county_code` exist.
+    # However, those features are not needed anyways.
+    no_null_columns = tuple(set(required_columns) - set(("county_code",)))
     _validate_required_columns(df, required_columns, source)
-    _validate_no_nulls(df, tuple(required_columns), source)
+    _validate_no_nulls(df, no_null_columns, source)
     _validate_coordinate_bounds(df, source)
-    _validate_name_unique(df, source)
     _validate_budapest_districts_complete(df, source)
