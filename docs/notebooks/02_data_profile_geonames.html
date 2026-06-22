@@ -7808,7 +7808,7 @@ a.anchor-link {
 </li>
 <li><p>Latitude and longitude values fall within valid Hungarian geographic bounds</p>
 </li>
-<li><p>No duplicate settlement names detected within the populated-place subset</p>
+<li><p>Significant number of duplicate settlement names detected within the populated-place subset</p>
 </li>
 <li><p>Budapest district naming follows multiple inconsistent conventions:</p>
 <ul>
@@ -8013,7 +8013,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Content-Finding-4-%E2%80%94-Populated-Features-Unique">Content Finding 4 — Populated Features Unique<a class="anchor-link" href="#Content-Finding-4-%E2%80%94-Populated-Features-Unique">¶</a></h2>
+<h2 id="Content-Finding-4-%E2%80%94-Populated-Feature-Duplicates">Content Finding 4 — Populated Feature Duplicates<a class="anchor-link" href="#Content-Finding-4-%E2%80%94-Populated-Feature-Duplicates">¶</a></h2>
 </div>
 </div>
 </div>
@@ -8025,10 +8025,29 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">duplicates</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"feature code"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"P"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">feature_codes</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"PPL"</span><span class="p">,</span>
+    <span class="s2">"PPLA"</span><span class="p">,</span>
+    <span class="s2">"PPLA2"</span><span class="p">,</span>
+    <span class="s2">"ADM2"</span><span class="p">,</span>
+<span class="p">}</span>
 
-<span class="k">assert</span> <span class="n">duplicates</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"❌ Populated features have duplicates"</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"✅ Populated features are unique"</span><span class="p">)</span>
+<span class="n">populated</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"feature code"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">feature_codes</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="n">dup_mask</span> <span class="o">=</span> <span class="n">populated</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">duplicate_groups</span> <span class="o">=</span> <span class="n">populated</span><span class="p">[</span><span class="n">dup_mask</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
+
+<span class="n">n_duplicate_rows</span> <span class="o">=</span> <span class="n">populated</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">n_duplicate_names</span> <span class="o">=</span> <span class="n">duplicate_groups</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Populated-place records: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">populated</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Duplicate name groups: </span><span class="si">{</span><span class="n">n_duplicate_names</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"Excess rows beyond first occurrence: </span><span class="si">{</span><span class="n">n_duplicate_rows</span><span class="si">}</span><span class="s2"> "</span>
+    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">n_duplicate_rows</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">populated</span><span class="p">)</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2"> of records)"</span>
+<span class="p">)</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">duplicate_groups</span><span class="p">[[</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"feature code"</span><span class="p">,</span> <span class="s2">"latitude"</span><span class="p">,</span> <span class="s2">"longitude"</span><span class="p">]])</span>
 </pre></div>
 </div>
 </div>
@@ -8041,8 +8060,121 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>✅ Populated features are unique
+<pre>Populated-place records: 10166
+Duplicate name groups: 525
+Excess rows beyond first occurrence: 1115 (10.97% of records)
 </pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>name</th>
+<th>feature code</th>
+<th>latitude</th>
+<th>longitude</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>9155</th>
+<td>Adorjántanya</td>
+<td>PPL</td>
+<td>47.95000</td>
+<td>20.85000</td>
+</tr>
+<tr>
+<th>23072</th>
+<td>Adorjántanya</td>
+<td>PPL</td>
+<td>45.78333</td>
+<td>18.43333</td>
+</tr>
+<tr>
+<th>9115</th>
+<td>Aladármajor</td>
+<td>PPL</td>
+<td>46.18333</td>
+<td>20.36667</td>
+</tr>
+<tr>
+<th>23003</th>
+<td>Aladármajor</td>
+<td>PPL</td>
+<td>47.08494</td>
+<td>18.82273</td>
+</tr>
+<tr>
+<th>9081</th>
+<td>Almásytanya</td>
+<td>PPL</td>
+<td>47.80000</td>
+<td>20.81667</td>
+</tr>
+<tr>
+<th>...</th>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<th>10132</th>
+<td>Újváritanya</td>
+<td>PPL</td>
+<td>46.98333</td>
+<td>18.93333</td>
+</tr>
+<tr>
+<th>10133</th>
+<td>Újváritanya</td>
+<td>PPL</td>
+<td>46.08333</td>
+<td>18.78333</td>
+</tr>
+<tr>
+<th>10092</th>
+<td>Ürgemajor</td>
+<td>PPL</td>
+<td>47.63333</td>
+<td>17.65000</td>
+</tr>
+<tr>
+<th>10093</th>
+<td>Ürgemajor</td>
+<td>PPL</td>
+<td>47.35246</td>
+<td>18.50203</td>
+</tr>
+<tr>
+<th>10094</th>
+<td>Ürgemajor</td>
+<td>PPL</td>
+<td>47.05000</td>
+<td>18.78333</td>
+</tr>
+</tbody>
+</table>
+<p>1640 rows × 4 columns</p>
+</div>
 </div>
 </div>
 </div>
@@ -8069,10 +8201,12 @@ a.anchor-link {
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">roman</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Budapest [IVX]+\."</span><span class="p">)]</span>
 <span class="n">numeric</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Budapest \d+"</span><span class="p">)]</span>
 
-<span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
-    <span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"Roman numeral"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">:</span> <span class="n">roman</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]},</span>
-    <span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"Numeric"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">:</span> <span class="n">numeric</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]},</span>
-<span class="p">])</span>
+<span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"Roman numeral"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">:</span> <span class="n">roman</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]},</span>
+        <span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"Numeric"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">:</span> <span class="n">numeric</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]},</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 
 <span class="n">display</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span>
 </pre></div>
@@ -8148,15 +8282,17 @@ a.anchor-link {
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">expected_districts</span> <span class="o">=</span> <span class="mi">23</span>  <span class="c1"># Budapest districts</span>
 
-<span class="n">kerulet</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span>
-    <span class="n">df</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Budapest [IVX]+\. kerület"</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="p">][</span><span class="s2">"name"</span><span class="p">]</span>
+<span class="n">kerulet</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Budapest [IVX]+\. kerület"</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="kc">False</span><span class="p">)][</span>
+    <span class="s2">"name"</span>
+<span class="p">]</span>
 
 <span class="n">missing_count</span> <span class="o">=</span> <span class="n">kerulet</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
 <span class="n">display</span><span class="p">(</span><span class="n">kerulet</span><span class="o">.</span><span class="n">to_frame</span><span class="p">())</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Count of 'kerület' format entries: </span><span class="si">{</span><span class="n">missing_count</span><span class="si">}</span><span class="s2">, missing </span><span class="si">{</span><span class="n">expected_districts</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">missing_count</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"Count of 'kerület' format entries: </span><span class="si">{</span><span class="n">missing_count</span><span class="si">}</span><span class="s2">, missing </span><span class="si">{</span><span class="n">expected_districts</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">missing_count</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8300,9 +8436,7 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">complete</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span>
-    <span class="n">df</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Budapest [IVX]+\.$"</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="p">]</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">complete</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Budapest [IVX]+\.$"</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span>
 
 <span class="n">display</span><span class="p">(</span><span class="n">complete</span><span class="p">[[</span><span class="s2">"name"</span><span class="p">]])</span>
 
@@ -8313,7 +8447,9 @@ a.anchor-link {
     <span class="sa">f</span><span class="s2">"Expected </span><span class="si">{</span><span class="n">expected_count</span><span class="si">}</span><span class="s2"> Budapest districts, found </span><span class="si">{</span><span class="n">observed_count</span><span class="si">}</span><span class="s2">"</span>
 <span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"✅ Budapest Roman numeral format is complete (</span><span class="si">{</span><span class="n">observed_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">expected_count</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"✅ Budapest Roman numeral format is complete (</span><span class="si">{</span><span class="n">observed_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">expected_count</span><span class="si">}</span><span class="s2">)"</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>

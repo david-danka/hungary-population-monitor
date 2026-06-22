@@ -7802,50 +7802,50 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="03-%E2%80%94-Integration-Validation:-Population-%E2%86%94-GeoNames-Settlement-Joinability">03 — Integration Validation: Population ↔ GeoNames Settlement Joinability<a class="anchor-link" href="#03-%E2%80%94-Integration-Validation:-Population-%E2%86%94-GeoNames-Settlement-Joinability">¶</a></h1><h2 id="Purpose">Purpose<a class="anchor-link" href="#Purpose">¶</a></h2><p>Validate deterministic joinability between government settlements population data and GeoNames settlement records using a reproducible normalization strategy derived from profiling findings.</p>
-<h2 id="Findings">Findings<a class="anchor-link" href="#Findings">¶</a></h2><h3 id="Source-Compatibility-Findings">Source Compatibility Findings<a class="anchor-link" href="#Source-Compatibility-Findings">¶</a></h3><ul>
-<li><p>Government settlement names and GeoNames settlement names are deterministically joinable after normalization.</p>
-</li>
-<li><p>One non-settlement government record is present:</p>
-<ul>
-<li><code>KSH code = 0</code></li>
-<li><code>LAKCÍM NÉLKÜLI</code></li>
-<li>excluded from integration validation.</li>
-</ul>
-</li>
-</ul>
-<h3 id="Normalization-Findings">Normalization Findings<a class="anchor-link" href="#Normalization-Findings">¶</a></h3><ul>
-<li><p>Budapest district naming differs between sources:</p>
-<ul>
-<li>Government data uses numeric district identifiers</li>
-<li>GeoNames uses Roman numeral district identifiers</li>
-</ul>
-</li>
-<li><p>A normalization rule converting Roman numerals to zero-padded district numbers resolves all Budapest district naming differences.</p>
-</li>
-</ul>
-<h3 id="GeoNames-Findings">GeoNames Findings<a class="anchor-link" href="#GeoNames-Findings">¶</a></h3><ul>
-<li><p>GeoNames contains duplicate settlement names after filtering to populated-place records.</p>
-</li>
-<li><p>Duplicate records are infrequent relative to the dataset size.</p>
-</li>
-<li><p>Duplicate groups exhibit only minor coordinate variation and do not materially affect settlement-level population analysis.</p>
-</li>
-<li><p>A deterministic first-record retention strategy produces a one-to-one settlement mapping.</p>
-</li>
-</ul>
-<h3 id="Integration-Findings">Integration Findings<a class="anchor-link" href="#Integration-Findings">¶</a></h3><ul>
-<li><p>After normalization and duplicate resolution, every settlement in the government dataset successfully matches a GeoNames settlement record.</p>
-</li>
-<li><p>Join coverage is:</p>
-<ul>
-<li>3177 / 3177 settlements matched</li>
-<li>100.00% coverage</li>
-</ul>
-</li>
-<li><p>No unmatched settlements remain after applying the integration rules.</p>
-</li>
-</ul>
+<h1 id="03-%E2%80%94-Integration-Validation:-Population-%E2%86%94-GeoNames-Settlement-Joinability">03 — Integration Validation: Population ↔ GeoNames Settlement Joinability<a class="anchor-link" href="#03-%E2%80%94-Integration-Validation:-Population-%E2%86%94-GeoNames-Settlement-Joinability">¶</a></h1><h2 id="Purpose">Purpose<a class="anchor-link" href="#Purpose">¶</a></h2><p>Validate deterministic joinability between government (KSH) settlement
+population data and GeoNames settlement records, and establish a
+correct, evidenced strategy for resolving settlement name collisions.</p>
+<h2 id="Findings">Findings<a class="anchor-link" href="#Findings">¶</a></h2><p><strong>Source compatibility.</strong> One non-settlement government record exists
+(<code>KSH code = 0</code>, <code>LAKCÍM NÉLKÜLI</code> — "no fixed address") and is excluded
+here. It is <em>not</em> dropped from the production pipeline, since
+<code>fact_population</code> references it; <code>dim_settlement</code> keeps a row for it
+with intentionally null coordinates.</p>
+<p><strong>Normalization.</strong> Budapest districts use Roman numerals in GeoNames
+(<code>Budapest I.</code>) vs. numeric in government data. Converting to
+zero-padded numeric form (<code>Budapest 01</code>) resolves this.</p>
+<p><strong>Settlement name is not a unique key in Hungary.</strong> Joining on
+normalized name alone produces dozens of KSH settlements with more
+than one GeoNames match, with coordinate spreads up to ~400 km within
+a single "duplicate" group. These are not coordinate noise — they're
+genuinely distinct settlements in different counties sharing a name
+(e.g. <code>Gyulaháza</code> exists in both Szabolcs-Szatmár-Bereg and Vas).</p>
+<p><strong>County disambiguation requires a crosswalk, used selectively.</strong>
+GeoNames' <code>admin1_code</code> numbering for Hungarian counties doesn't match
+KSH's <code>county_code</code> numbering — crosswalked by name via GeoNames'
+published <code>admin1CodesASCII.txt</code>. Critically, county must only be
+checked for names that are <em>actually ambiguous</em>: some individual
+GeoNames records carry an incorrect or stale <code>admin1_code</code> even when
+they're the sole, correct candidate for a non-colliding name.
+Requiring county-match universally breaks legitimate matches for
+exactly those records. The fix is a three-tier strategy:</p>
+<ol>
+<li><strong>Unambiguous names</strong> (single GeoNames candidate) match on name
+alone — sidestepping any bad <code>admin1_code</code>, since there's nothing
+to disambiguate.</li>
+<li><strong>Ambiguous names</strong> (multiple GeoNames candidates) match on
+<code>(name, county_code)</code>, which correctly resolves cross-county
+collisions.</li>
+<li><strong>Residual same-county duplicates</strong> (6 names: GeoNames carries two
+records for the same place/county) are resolved by preferring
+higher recorded <code>population</code> — a real population is strong
+evidence of being the actual settlement rather than a near-empty
+satellite hamlet — falling back to the most recently modified
+record only when population also ties. This fallback is weaker
+(modification date isn't causally tied to geographic correctness)
+and was spot-checked against one real case (<code>Szilvágy</code>) rather than
+assumed.</li>
+</ol>
+<h2 id="Result">Result<a class="anchor-link" href="#Result">¶</a></h2><p>3177 / 3177 KSH settlements matched — 100.00% coverage.</p>
 <hr/>
 </div>
 </div>
@@ -7870,6 +7870,7 @@ a.anchor-link {
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hpm.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
@@ -7887,7 +7888,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Load-Governmental-Settlement-Population-Data">Load Governmental Settlement Population Data<a class="anchor-link" href="#Load-Governmental-Settlement-Population-Data">¶</a></h2>
+<h2 id="Load-Governmental-Settlement-Population-Data">Load Governmental Settlement Population Data<a class="anchor-link" href="#Load-Governmental-Settlement-Population-Data">¶</a></h2><p>Population data profiling revealed one administrative change: Balatonakarattya is a distinct settlement from 2014 on, meaning 3178 records after 2014 and 3176 before. Select a population Excel file that contains all 3178 records.</p>
 </div>
 </div>
 </div>
@@ -7899,17 +7900,35 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">gov</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span>
-    <span class="nb">list</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">raw_population</span><span class="o">.</span><span class="n">iterdir</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">N_GOV_RECORDS</span> <span class="o">=</span> <span class="mi">3178</span>
+
+<span class="n">excel_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">raw_population</span><span class="o">.</span><span class="n">iterdir</span><span class="p">())</span>
+<span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">gov</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span>
+    <span class="n">excel_files</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
     <span class="n">sheet_name</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">header</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">gov</span> <span class="o">=</span> <span class="n">gov</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">"KSH</span><span class="se">\n</span><span class="s2">kód"</span><span class="p">:</span> <span class="s2">"ksh_code"</span><span class="p">,</span> <span class="s2">"Település"</span><span class="p">:</span> <span class="s2">"ksh_name"</span><span class="p">})</span>
+<span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">gov</span><span class="p">)</span> <span class="o">!=</span> <span class="n">N_GOV_RECORDS</span><span class="p">:</span>
+    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">gov</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span>
+        <span class="n">excel_files</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+        <span class="n">sheet_name</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">header</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="n">gov</span> <span class="o">=</span> <span class="n">gov</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">"KSH</span><span class="se">\n</span><span class="s2">kód"</span><span class="p">:</span> <span class="s2">"ksh_code"</span><span class="p">,</span>
+    <span class="s2">"Település"</span><span class="p">:</span> <span class="s2">"ksh_name"</span><span class="p">,</span>
+    <span class="s2">"Megye</span><span class="se">\n</span><span class="s2">kód"</span><span class="p">:</span> <span class="s2">"county_code"</span><span class="p">,</span>
+    <span class="s2">"Vármegye</span><span class="se">\n</span><span class="s2">kód"</span><span class="p">:</span> <span class="s2">"county_code"</span>
+<span class="p">})</span>
 
 <span class="n">EXCLUDED_KSH_CODES</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">}</span>  <span class="c1"># Corresponds to "LAKCÍM NÉLKÜLI"</span>
-
 <span class="n">gov</span> <span class="o">=</span> <span class="n">gov</span><span class="p">[</span><span class="o">~</span><span class="n">gov</span><span class="p">[</span><span class="s2">"ksh_code"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">EXCLUDED_KSH_CODES</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
 <span class="n">display</span><span class="p">(</span><span class="n">gov</span><span class="p">)</span>
@@ -7943,9 +7962,9 @@ a.anchor-link {
 <thead>
 <tr style="text-align: right;">
 <th></th>
-<th>Megye\nkód</th>
+<th>county_code</th>
 <th>ksh_code</th>
-<th>Megye</th>
+<th>Vármegye</th>
 <th>ksh_name</th>
 <th>Település\ntípusa</th>
 <th>Állandó férfi\nlakosság összesen</th>
@@ -7961,9 +7980,9 @@ a.anchor-link {
 <td>BUD</td>
 <td>Budapest                 01</td>
 <td>fővárosi kerület</td>
-<td>12065</td>
-<td>14341</td>
-<td>26406</td>
+<td>11799</td>
+<td>13580</td>
+<td>25379</td>
 </tr>
 <tr>
 <th>2</th>
@@ -7972,9 +7991,9 @@ a.anchor-link {
 <td>BUD</td>
 <td>Budapest                 02</td>
 <td>fővárosi kerület</td>
-<td>40261</td>
-<td>47721</td>
-<td>87982</td>
+<td>38659</td>
+<td>45138</td>
+<td>83797</td>
 </tr>
 <tr>
 <th>3</th>
@@ -7983,9 +8002,9 @@ a.anchor-link {
 <td>BUD</td>
 <td>Budapest                 03</td>
 <td>fővárosi kerület</td>
-<td>58219</td>
-<td>68711</td>
-<td>126930</td>
+<td>56110</td>
+<td>65452</td>
+<td>121562</td>
 </tr>
 <tr>
 <th>4</th>
@@ -7994,9 +8013,9 @@ a.anchor-link {
 <td>BUD</td>
 <td>Budapest                 04</td>
 <td>fővárosi kerület</td>
-<td>45627</td>
-<td>53546</td>
-<td>99173</td>
+<td>41788</td>
+<td>49026</td>
+<td>90814</td>
 </tr>
 <tr>
 <th>5</th>
@@ -8005,9 +8024,9 @@ a.anchor-link {
 <td>BUD</td>
 <td>Budapest                 05</td>
 <td>fővárosi kerület</td>
-<td>12273</td>
-<td>13584</td>
-<td>25857</td>
+<td>11812</td>
+<td>12528</td>
+<td>24340</td>
 </tr>
 <tr>
 <th>...</th>
@@ -8027,9 +8046,9 @@ a.anchor-link {
 <td>ZAL</td>
 <td>Zalatárnok</td>
 <td>község</td>
-<td>314</td>
-<td>316</td>
-<td>630</td>
+<td>315</td>
+<td>330</td>
+<td>645</td>
 </tr>
 <tr>
 <th>3174</th>
@@ -8038,9 +8057,9 @@ a.anchor-link {
 <td>ZAL</td>
 <td>Zalaújlak</td>
 <td>község</td>
-<td>54</td>
-<td>51</td>
-<td>105</td>
+<td>59</td>
+<td>61</td>
+<td>120</td>
 </tr>
 <tr>
 <th>3175</th>
@@ -8049,9 +8068,9 @@ a.anchor-link {
 <td>ZAL</td>
 <td>Zalavár</td>
 <td>község</td>
-<td>451</td>
-<td>479</td>
-<td>930</td>
+<td>464</td>
+<td>476</td>
+<td>940</td>
 </tr>
 <tr>
 <th>3176</th>
@@ -8060,9 +8079,9 @@ a.anchor-link {
 <td>ZAL</td>
 <td>Zalavég</td>
 <td>község</td>
-<td>203</td>
-<td>166</td>
-<td>369</td>
+<td>187</td>
+<td>158</td>
+<td>345</td>
 </tr>
 <tr>
 <th>3177</th>
@@ -8071,34 +8090,15 @@ a.anchor-link {
 <td>ZAL</td>
 <td>Zebecke</td>
 <td>község</td>
-<td>36</td>
-<td>40</td>
-<td>76</td>
+<td>37</td>
+<td>34</td>
+<td>71</td>
 </tr>
 </tbody>
 </table>
 <p>3177 rows × 8 columns</p>
 </div>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=954314e0">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Integration-Design-Decision">Integration Design Decision<a class="anchor-link" href="#Integration-Design-Decision">¶</a></h2><p>GeoNames contains multiple records for certain normalized settlement names.</p>
-<p>Inspection of duplicate groups showed that:</p>
-<ul>
-<li>duplicates are rare relative to the full dataset</li>
-<li>coordinate differences are small</li>
-<li>duplicate records do not materially affect settlement-level population analyses</li>
-</ul>
-<p>For this project, duplicate GeoNames records were resolved by retaining the first occurrence for each normalized settlement name.</p>
-<p>This produces a deterministic one-to-one mapping suitable for settlement-level geospatial enrichment.</p>
 </div>
 </div>
 </div>
@@ -8136,14 +8136,16 @@ a.anchor-link {
     <span class="n">names</span><span class="o">=</span><span class="n">GEONAMES_COLUMNS</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">mask</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="p">(</span><span class="n">geo</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">())</span>
-    <span class="o">&amp;</span> <span class="p">(</span><span class="n">geo</span><span class="p">[</span><span class="s2">"feature code"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"PPL"</span><span class="p">,</span> <span class="s2">"PPLA"</span><span class="p">,</span> <span class="s2">"PPLA2"</span><span class="p">,</span> <span class="s2">"ADM2"</span><span class="p">]))</span>
-<span class="p">)</span>
+<span class="n">ALLOWED_FEATURE_CODES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"PPL"</span><span class="p">,</span>      <span class="c1"># Populated places</span>
+    <span class="s2">"PPLA"</span><span class="p">,</span>     <span class="c1"># County seat</span>
+    <span class="s2">"PPLA2"</span><span class="p">,</span>    <span class="c1"># "járás" seat</span>
+    <span class="s2">"ADM2"</span><span class="p">,</span>     <span class="c1"># County district "járás" + capital districts</span>
+<span class="p">]</span>
+
+<span class="n">mask</span> <span class="o">=</span> <span class="n">geo</span><span class="p">[</span><span class="s2">"feature code"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">ALLOWED_FEATURE_CODES</span><span class="p">)</span>
 
 <span class="n">geo</span> <span class="o">=</span> <span class="n">geo</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-<span class="n">geo</span> <span class="o">=</span> <span class="n">geo</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="s2">"first"</span><span class="p">)</span>
 
 <span class="n">display</span><span class="p">(</span><span class="n">geo</span><span class="p">)</span>
 </pre></div>
@@ -8442,7 +8444,7 @@ a.anchor-link {
 </tr>
 </tbody>
 </table>
-<p>9051 rows × 19 columns</p>
+<p>10166 rows × 19 columns</p>
 </div>
 </div>
 </div>
@@ -8455,7 +8457,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Normalization-Strategy">Normalization Strategy<a class="anchor-link" href="#Normalization-Strategy">¶</a></h2>
+<h2 id="Normalization">Normalization<a class="anchor-link" href="#Normalization">¶</a></h2>
 </div>
 </div>
 </div>
@@ -8468,29 +8470,10 @@ a.anchor-link {
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">ROMAN_TO_INT</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"I"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="s2">"II"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="s2">"III"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="s2">"IV"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="s2">"V"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
-    <span class="s2">"VI"</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
-    <span class="s2">"VII"</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
-    <span class="s2">"VIII"</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
-    <span class="s2">"IX"</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
-    <span class="s2">"X"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="s2">"XI"</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
-    <span class="s2">"XII"</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
-    <span class="s2">"XIII"</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>
-    <span class="s2">"XIV"</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>
-    <span class="s2">"XV"</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span>
-    <span class="s2">"XVI"</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
-    <span class="s2">"XVII"</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span>
-    <span class="s2">"XVIII"</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span>
-    <span class="s2">"XIX"</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>
-    <span class="s2">"XX"</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
-    <span class="s2">"XXI"</span><span class="p">:</span> <span class="mi">21</span><span class="p">,</span>
-    <span class="s2">"XXII"</span><span class="p">:</span> <span class="mi">22</span><span class="p">,</span>
-    <span class="s2">"XXIII"</span><span class="p">:</span> <span class="mi">23</span><span class="p">,</span>
+    <span class="s2">"I"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"II"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"III"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">"IV"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">"V"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">"VI"</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s2">"VII"</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+    <span class="s2">"VIII"</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">"IX"</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">"XI"</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span> <span class="s2">"XII"</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="s2">"XIII"</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>
+    <span class="s2">"XIV"</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="s2">"XV"</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span> <span class="s2">"XVI"</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="s2">"XVII"</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span> <span class="s2">"XVIII"</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s2">"XIX"</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>
+    <span class="s2">"XX"</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s2">"XXI"</span><span class="p">:</span> <span class="mi">21</span><span class="p">,</span> <span class="s2">"XXII"</span><span class="p">:</span> <span class="mi">22</span><span class="p">,</span> <span class="s2">"XXIII"</span><span class="p">:</span> <span class="mi">23</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -8508,6 +8491,52 @@ a.anchor-link {
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"Budapest </span><span class="si">{</span><span class="n">district</span><span class="si">:</span><span class="s2">02</span><span class="si">}</span><span class="s2">"</span>
 
     <span class="k">return</span> <span class="n">name</span>
+
+<span class="n">gov</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gov</span><span class="p">[</span><span class="s2">"ksh_name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">normalize</span><span class="p">)</span>
+<span class="n">geo</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span> <span class="o">=</span> <span class="n">geo</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">normalize</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4967a758">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Coordinate-Spread-Helper">Coordinate Spread Helper<a class="anchor-link" href="#Coordinate-Spread-Helper">¶</a></h2><p>Used both to demonstrate the original name-only problem and to verify the county-based fix actually shrinks it.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=45403aef">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">haversine_km</span><span class="p">(</span><span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Great-circle distance between two points, in kilometers."""</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="mf">6371.0</span>
+    <span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">,</span> <span class="p">[</span><span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">])</span>
+    <span class="n">dlat</span> <span class="o">=</span> <span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span>
+    <span class="n">dlon</span> <span class="o">=</span> <span class="n">lon2</span> <span class="o">-</span> <span class="n">lon1</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dlat</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dlon</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">max_pairwise_km</span><span class="p">(</span><span class="n">group</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">group</span><span class="p">[[</span><span class="s2">"latitude"</span><span class="p">,</span> <span class="s2">"longitude"</span><span class="p">]]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="n">haversine_km</span><span class="p">(</span><span class="o">*</span><span class="n">coords</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="o">*</span><span class="n">coords</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">))</span>
+    <span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8520,37 +8549,11 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Apply-normalization">Apply normalization<a class="anchor-link" href="#Apply-normalization">¶</a></h2>
+<h2 id="Finding:-Name-Alone-Produces-Duplicates">Finding: Name Alone Produces Duplicates<a class="anchor-link" href="#Finding:-Name-Alone-Produces-Duplicates">¶</a></h2><p>Joining on normalized name alone, without any county disambiguation.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=3fdaf3aa">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">gov</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gov</span><span class="p">[</span><span class="s2">"ksh_name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">normalize</span><span class="p">)</span>
-<span class="n">geo</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span> <span class="o">=</span> <span class="n">geo</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">normalize</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b552fa37">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Join-validation">Join validation<a class="anchor-link" href="#Join-validation">¶</a></h2>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=57093793">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3fdaf3aa">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8558,31 +8561,53 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">merged</span> <span class="o">=</span> <span class="n">gov</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
-    <span class="n">geo</span><span class="p">,</span>
-    <span class="n">on</span><span class="o">=</span><span class="s2">"norm"</span><span class="p">,</span>
-    <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span>
-    <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">probe</span> <span class="o">=</span> <span class="n">gov</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">geo</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">"norm"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">)</span>
+<span class="n">name_only_dupes</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"norm"</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+<span class="n">name_only_dupe_groups</span> <span class="o">=</span> <span class="n">probe</span><span class="p">[</span><span class="n">probe</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">name_only_dupes</span><span class="p">[</span><span class="n">name_only_dupes</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+
+<span class="n">spread_name_only</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">name_only_dupe_groups</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"norm"</span><span class="p">,</span> <span class="n">group_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">max_pairwise_km</span><span class="p">,</span> <span class="n">include_groups</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">"max_pairwise_km"</span><span class="p">)</span>
 <span class="p">)</span>
 
-<span class="n">unmatched</span> <span class="o">=</span> <span class="n">merged</span><span class="p">[</span><span class="n">merged</span><span class="p">[</span><span class="s2">"_merge"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"both"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Name-only duplicate groups: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">spread_name_only</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Max spread:  </span><span class="si">{</span><span class="n">spread_name_only</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> km"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Mean spread: </span><span class="si">{</span><span class="n">spread_name_only</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> km"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"=&gt; Real, distinct settlements colliding on name, not coordinate noise."</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c29a36be">
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Name-only duplicate groups: 53
+Max spread:  405.85 km
+Mean spread: 164.69 km
+=&gt; Real, distinct settlements colliding on name, not coordinate noise.
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7780c5a3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Core-assertion">Core assertion<a class="anchor-link" href="#Core-assertion">¶</a></h2>
+<h2 id="Tier-1:-Unambiguous-Names-%E2%80%94-Join-on-norm-Alone">Tier 1: Unambiguous Names — Join on <code>norm</code> Alone<a class="anchor-link" href="#Tier-1:-Unambiguous-Names-%E2%80%94-Join-on-norm-Alone">¶</a></h2>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1c4ac3ab">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f4aad13b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8590,10 +8615,137 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">assert</span> <span class="n">unmatched</span><span class="o">.</span><span class="n">empty</span><span class="p">,</span> <span class="p">(</span>
-    <span class="sa">f</span><span class="s2">"❌ Unmatched KSH settlements found: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unmatched</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">ambiguous_norms</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">name_only_dupes</span><span class="p">[</span><span class="n">name_only_dupes</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+<span class="n">unambiguous_gov</span> <span class="o">=</span> <span class="n">gov</span><span class="p">[</span><span class="o">~</span><span class="n">gov</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">ambiguous_norms</span><span class="p">)]</span>
+<span class="n">ambiguous_gov</span> <span class="o">=</span> <span class="n">gov</span><span class="p">[</span><span class="n">gov</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">ambiguous_norms</span><span class="p">)]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unambiguous records: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unambiguous_gov</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Ambiguous records: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ambiguous_gov</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">unambiguous_merged</span> <span class="o">=</span> <span class="n">unambiguous_gov</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">geo</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">"norm"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="ow">not</span> <span class="n">unambiguous_merged</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> <span class="s2">"❌ Unexpected duplicate match"</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"✅ One-to-one mathc only. Unambiguous settlements matched: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unambiguous_merged</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Unambiguous records: 3124
+Ambiguous records: 53
+✅ One-to-one mathc only. Unambiguous settlements matched: 3124
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3b04cf34">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Tier-2:-Ambiguous-Names-%E2%80%94-Join-on-(norm,-county_code)">Tier 2: Ambiguous Names — Join on (<code>norm</code>, <code>county_code</code>)<a class="anchor-link" href="#Tier-2:-Ambiguous-Names-%E2%80%94-Join-on-(norm,-county_code)">¶</a></h2><p>GeoNames' admin1_code corresponds to county codes.</p>
+<p>But GeoNames' admin1_code numbering doesn't match KSH's county_code numbering — crosswalked by name via GeoNames' published admin1CodesASCII.txt.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=021176ca">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="Step-1-%E2%80%94-county_code-Mapping-Check">Step 1 — <code>county_code</code> Mapping Check<a class="anchor-link" href="#Step-1-%E2%80%94-county_code-Mapping-Check">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0219dbe2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">GEONAMES_ADMIN1_TO_KSH_COUNTY</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="mi">12</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">14</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">16</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">17</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">18</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">21</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">22</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span>
+    <span class="mi">23</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">24</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">ambiguous_geo</span> <span class="o">=</span> <span class="n">geo</span><span class="p">[</span><span class="n">geo</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">ambiguous_norms</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">ambiguous_geo</span><span class="p">[</span><span class="s2">"county_code"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">ambiguous_geo</span><span class="p">[</span><span class="s2">"admin1 code"</span><span class="p">]</span>
+    <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">GEONAMES_ADMIN1_TO_KSH_COUNTY</span><span class="p">)</span>
 <span class="p">)</span>
 
+<span class="n">unresolved_norms</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">ambiguous_geo</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"norm"</span><span class="p">)[</span><span class="s2">"county_code"</span><span class="p">]</span>
+    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">())</span>
+<span class="p">)</span>
+<span class="n">bad_norms</span> <span class="o">=</span> <span class="n">unresolved_norms</span><span class="p">[</span><span class="o">~</span><span class="n">unresolved_norms</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="k">assert</span> <span class="ow">not</span> <span class="n">bad_norms</span><span class="p">,</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"❌ </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bad_norms</span><span class="p">)</span><span class="si">}</span><span class="s2"> norms have no county_code mapped: "</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">bad_norms</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"✅ All norms got county_code mapped =&gt; join is possible based on (name, county_code)"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>✅ All norms got county_code mapped =&gt; join is possible based on (name, county_code)
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=95db3832">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="Step-2-%E2%80%94-Perform-Join-on-(norm,-county_code)">Step 2 — Perform Join on (<code>norm</code>, <code>county_code</code>)<a class="anchor-link" href="#Step-2-%E2%80%94-Perform-Join-on-(norm,-county_code)">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=28d00ce4">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">ambiguous_merged</span> <span class="o">=</span> <span class="n">ambiguous_gov</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+    <span class="n">ambiguous_geo</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">,</span> <span class="s2">"county_code"</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="n">unmatched</span> <span class="o">=</span> <span class="n">ambiguous_merged</span><span class="p">[</span><span class="n">ambiguous_merged</span><span class="p">[</span><span class="s2">"_merge"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"both"</span><span class="p">]</span>
+<span class="k">assert</span> <span class="n">unmatched</span><span class="o">.</span><span class="n">empty</span><span class="p">,</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"❌ </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unmatched</span><span class="p">)</span><span class="si">}</span><span class="s2"> norms have no match: "</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">unmatched</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"✅ All KSH settlements successfully matched to GeoNames"</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -8613,20 +8765,155 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=740b003e">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c96ad77a">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Tier-3:-Resolve-Residual-Duplicates-Manually">Tier 3: Resolve Residual Duplicates Manually<a class="anchor-link" href="#Tier-3:-Resolve-Residual-Duplicates-Manually">¶</a></h2><p>A handful of names still match more than one GeoNames record within
+the <em>same</em> county — a GeoNames data redundancy, not a real-world
+ambiguity. Resolved by preferring higher population, then more recent
+modification date as a weaker fallback.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cfc1e39f">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="Step-1-%E2%80%94-Find-Remaining-Duplicates">Step 1 — Find Remaining Duplicates<a class="anchor-link" href="#Step-1-%E2%80%94-Find-Remaining-Duplicates">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f9ea3f19">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gov</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">name_county_dupes</span> <span class="o">=</span> <span class="n">ambiguous_merged</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"norm"</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+<span class="n">dupe_mask</span> <span class="o">=</span> <span class="n">ambiguous_merged</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">name_county_dupes</span><span class="p">[</span><span class="n">name_county_dupes</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="n">name_county_dupe_groups</span> <span class="o">=</span> <span class="n">ambiguous_merged</span><span class="p">[</span><span class="n">dupe_mask</span><span class="p">]</span>
+
+<span class="n">spread_name_county</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">name_county_dupe_groups</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"norm"</span><span class="p">,</span> <span class="n">group_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">max_pairwise_km</span><span class="p">,</span> <span class="n">include_groups</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">"max_pairwise_km"</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">spread_name_county</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>norm
+Beszterec          0.917432
+Kétpó              2.241317
+Meggyeskovácsi     1.888815
+Nógrádmegyer       0.654648
+Pálmajor          14.459266
+Szilvágy          23.697742
+Name: max_pairwise_km, dtype: float64</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3c251482">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="Step-2-%E2%80%94-Resolve-Duplicates">Step 2 — Resolve Duplicates<a class="anchor-link" href="#Step-2-%E2%80%94-Resolve-Duplicates">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d89abcf2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">ambiguous_merged_resolved</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">ambiguous_merged</span>
+    <span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s2">"population"</span><span class="p">,</span> <span class="s2">"modification date"</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"stable"</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="s2">"ksh_code"</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="s2">"first"</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">ambiguous_merged_resolved</span><span class="p">[</span><span class="s2">"ksh_code"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span>
+    <span class="s2">"❌ Still have duplicate KSH settlements after resolution"</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"✅ Resolved </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ambiguous_merged</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">ambiguous_merged_resolved</span><span class="p">)</span><span class="si">}</span><span class="s2"> duplicate rows"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>✅ Resolved 6 duplicate rows
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=197d4678">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Core-Assertion">Core Assertion<a class="anchor-link" href="#Core-Assertion">¶</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=dda30695">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">merged</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">ambiguous_merged_resolved</span><span class="p">,</span> <span class="n">unambiguous_merged</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">merged</span><span class="p">[</span><span class="s2">"ksh_code"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span>
+    <span class="s2">"❌ Some KSH settlement appears more than once in the final result"</span>
+<span class="p">)</span>
+
+<span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gov</span><span class="p">)</span>
 <span class="n">matched</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">merged</span><span class="p">[</span><span class="n">merged</span><span class="p">[</span><span class="s2">"_merge"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"both"</span><span class="p">])</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total KSH settlements: </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Matched settlements: </span><span class="si">{</span><span class="n">matched</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Coverage: </span><span class="si">{</span><span class="n">matched</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">total</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">matched</span> <span class="o">==</span> <span class="n">total</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"❌ Coverage incomplete: </span><span class="si">{</span><span class="n">matched</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">"</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"✅ All KSH settlements successfully matched to GeoNames"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8642,6 +8929,7 @@ a.anchor-link {
 <pre>Total KSH settlements: 3177
 Matched settlements: 3177
 Coverage: 100.00%
+✅ All KSH settlements successfully matched to GeoNames
 </pre>
 </div>
 </div>
