@@ -26,5 +26,7 @@ class Settings:
 
     raw_settlements: Path = base_dir / "data/raw/settlements"
 
+    database: Path = base_dir / "data/database"
+
 
 settings = Settings()
