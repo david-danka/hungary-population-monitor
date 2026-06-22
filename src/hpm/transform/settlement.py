@@ -38,16 +38,51 @@ class GeoNamesSchema:
         "ADM2",
     }
 
+    # GeoNames admin1_code -> KSH county_code. See
+    # notebooks/03_integration_validation_pop_geonames.ipynb for the derivation.
+    admin1_to_county_code = {
+        1: 3,
+        2: 2,
+        3: 4,
+        4: 5,
+        5: 1,
+        6: 6,
+        8: 7,
+        9: 8,
+        10: 9,
+        11: 10,
+        12: 11,
+        14: 12,
+        16: 13,
+        17: 14,
+        18: 15,
+        20: 16,
+        21: 17,
+        22: 18,
+        23: 19,
+        24: 20,
+    }
+
+    # population and modification_date are kept through to dim_settlement
+    # construction -- they're needed by star_schema._build_dim_settlement
+    # to resolve same-(name, county) GeoNames redundancy *after* the join,
+    # and are dropped before the final dim_settlement output.
     output_columns = [
         "name",
+        "county_code",
         "latitude",
         "longitude",
+        "population",
+        "modification_date",
     ]
 
     dtypes = {
         "name": "string",
+        "county_code": "Int64",  # nullable -- stale admin1 codes -> NaN
         "latitude": "float64",
         "longitude": "float64",
+        "population": "int64",
+        "modification_date": "string",  # ISO format; sorts correctly as string
     }
 
 
@@ -81,8 +116,11 @@ ROMAN_TO_INT = {
 
 
 def _normalize_settlement_name(name: str) -> str:
+    """
+    Normalize a settlement name, converting Budapest roman-numeral
+    district notation to zero-padded numeric form.
+    """
     match = re.search(schema.budapest_district_pattern, name)
-
     if match:
         roman_dist = match.group(1)
         district = ROMAN_TO_INT[roman_dist]
@@ -94,7 +132,7 @@ def _normalize_settlement_name(name: str) -> str:
 
 def transform_settlement_data() -> pd.DataFrame:
     """
-    Extract populated settlements and coordinates from GeoNames dataset.
+    Extract populated settlements, county, and coordinates from GeoNames.
     """
     raw_df = pd.read_csv(
         settings.raw_settlements / "HU.txt",
@@ -104,14 +142,13 @@ def transform_settlement_data() -> pd.DataFrame:
         low_memory=False,
     )
 
-    populated = raw_df[raw_df["feature_code"].isin(schema.allowed_feature_codes)]
+    populated = raw_df[
+        raw_df["feature_code"].isin(schema.allowed_feature_codes)
+    ].copy()
+    populated["name"] = populated["name"].apply(_normalize_settlement_name)
+    populated["county_code"] = populated["admin1_code"].map(schema.admin1_to_county_code)
 
-    filtered = populated[schema.output_columns].copy()
-
-    filtered["name"] = filtered["name"].apply(_normalize_settlement_name)
-
-    filtered = filtered.drop_duplicates(subset="name").reset_index(drop=True)
-
+    filtered = populated[schema.output_columns].reset_index(drop=True)
     filtered = filtered.astype(schema.dtypes)
 
     validate_settlement_data(filtered, schema.output_columns, source="HU.txt")
