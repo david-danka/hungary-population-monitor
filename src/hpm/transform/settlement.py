@@ -1,3 +1,11 @@
+"""Transform GeoNames settlement dumps into a cleaned settlement table.
+
+This module normalizes GeoNames raw exports for Hungary, converts
+Budapest district roman numerals into zero-padded numbers, filters the
+relevant feature classes, and prepares a small, typed DataFrame used
+by the star-schema integration step.
+"""
+
 import re
 
 import pandas as pd

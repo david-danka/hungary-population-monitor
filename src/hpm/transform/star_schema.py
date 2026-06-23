@@ -1,3 +1,11 @@
+"""Build star-schema components from cleaned population and settlement data.
+
+This module contains helpers to construct the three star-schema tables
+``dim_county``, ``dim_settlement`` and ``fact_population`` and includes
+integration logic to enrich settlements with GeoNames coordinates while
+resolving duplicate GeoNames records deterministically.
+"""
+
 import pandas as pd
 
 

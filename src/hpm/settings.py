@@ -16,8 +16,9 @@ class Settings:
 
     Attributes:
         base_dir: Absolute path to the project root directory.
-        raw_excels: Directory where raw Excel files are stored.
-        processed_excels: Directory for processed dataset outputs.
+        raw_population: Directory containing raw population Excel files.
+        raw_settlements: Directory containing raw GeoNames settlement files.
+        database: Directory where the SQLite database file will be written.
     """
 
     base_dir: Path = Path(__file__).resolve().parent.parent.parent
