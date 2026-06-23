@@ -20,6 +20,9 @@ dev =  [
     "nbstripout == 0.9.1"
 ]
 
+[project.scripts]
+hpm = "hpm.cli:cli"
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
