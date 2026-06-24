@@ -2,8 +2,7 @@
 
 This module loads the raw population workbooks published
 yearly by KSH (Hungarian Central Statistical Office), normalizes their
-inconsistent schema across 2011-2026, and writes a single combined CSV
-ready for star-schema loading.
+inconsistent schema across 2011-2026.
 
 Schema assumptions and known anomalies (column renames, settlement type
 encoding changes, the 2013 typo, the 2017 type inconsistency, etc.) were
