@@ -212,22 +212,6 @@ def _clean_population_data(xl: pd.ExcelFile) -> pd.DataFrame:
     return df
 
 
-def _save_population_data(df: pd.DataFrame) -> Path:
-    """Write the combined, cleaned population dataset to disk.
-
-    Args:
-        df: The full cleaned population DataFrame spanning all years.
-
-    Returns:
-        The path the dataset was written to.
-    """
-    settings.processed_population.mkdir(parents=True, exist_ok=True)
-    target = settings.processed_population / "population_data.csv"
-    df.to_csv(target, index=False)
-    print(f"Saved -> {target}")
-    return target
-
-
 def transform_population_datasets() -> pd.DataFrame:
     """Clean, validate, and persist all raw population workbooks.
 
