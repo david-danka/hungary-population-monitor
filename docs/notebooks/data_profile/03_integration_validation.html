@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>03_integration_validation_pop_geonames</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>03_integration_validation</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7796,7 +7796,7 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f218eb1e">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7816,9 +7816,7 @@ zero-padded numeric form (<code>Budapest 01</code>) resolves this.</p>
 <p><strong>Settlement name is not a unique key in Hungary.</strong> Joining on
 normalized name alone produces dozens of KSH settlements with more
 than one GeoNames match, with coordinate spreads up to ~400 km within
-a single "duplicate" group. These are not coordinate noise — they're
-genuinely distinct settlements in different counties sharing a name
-(e.g. <code>Gyulaháza</code> exists in both Szabolcs-Szatmár-Bereg and Vas).</p>
+a single "duplicate" group.</p>
 <p><strong>County disambiguation requires a crosswalk, used selectively.</strong>
 GeoNames' <code>admin1_code</code> numbering for Hungarian counties doesn't match
 KSH's <code>county_code</code> numbering — crosswalked by name via GeoNames'
@@ -7845,13 +7843,13 @@ record only when population also ties. This fallback is weaker
 and was spot-checked against one real case (<code>Szilvágy</code>) rather than
 assumed.</li>
 </ol>
-<h2 id="Result">Result<a class="anchor-link" href="#Result">¶</a></h2><p>3177 / 3177 KSH settlements matched — 100.00% coverage.</p>
+<h2 id="Result">Result<a class="anchor-link" href="#Result">¶</a></h2><p>3178 / 3178 KSH settlements matched — 100.00% coverage.</p>
 <hr/>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2ee3d18c">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7861,7 +7859,7 @@ assumed.</li>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=77ff4069">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7882,17 +7880,17 @@ assumed.</li>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=32c8857f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Load-Governmental-Settlement-Population-Data">Load Governmental Settlement Population Data<a class="anchor-link" href="#Load-Governmental-Settlement-Population-Data">¶</a></h2><p>Population data profiling revealed one administrative change: Balatonakarattya is a distinct settlement from 2014 on, meaning 3178 records after 2014 and 3176 before. Select a population Excel file that contains all 3178 records.</p>
+<h2 id="Load-Governmental-Settlement-Population-Data">Load Governmental Settlement Population Data<a class="anchor-link" href="#Load-Governmental-Settlement-Population-Data">¶</a></h2><p>Population data profiling revealed one administrative change: Balatonakarattya is a distinct settlement from 2014 on, meaning 3178 records after 2014 and 3176 before. Select a population Excel file that contains all 3178 records. Insert an aggregate Budapest record.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=685b6b8b">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7924,6 +7922,8 @@ assumed.</li>
 <span class="n">gov</span> <span class="o">=</span> <span class="n">gov</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
     <span class="s2">"KSH</span><span class="se">\n</span><span class="s2">kód"</span><span class="p">:</span> <span class="s2">"ksh_code"</span><span class="p">,</span>
     <span class="s2">"Település"</span><span class="p">:</span> <span class="s2">"ksh_name"</span><span class="p">,</span>
+    <span class="s2">"Megye"</span><span class="p">:</span> <span class="s2">"county_name"</span><span class="p">,</span>
+    <span class="s2">"Vármegye"</span><span class="p">:</span> <span class="s2">"county_name"</span><span class="p">,</span>
     <span class="s2">"Megye</span><span class="se">\n</span><span class="s2">kód"</span><span class="p">:</span> <span class="s2">"county_code"</span><span class="p">,</span>
     <span class="s2">"Vármegye</span><span class="se">\n</span><span class="s2">kód"</span><span class="p">:</span> <span class="s2">"county_code"</span>
 <span class="p">})</span>
@@ -7931,6 +7931,17 @@ assumed.</li>
 <span class="n">EXCLUDED_KSH_CODES</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">}</span>  <span class="c1"># Corresponds to "LAKCÍM NÉLKÜLI"</span>
 <span class="n">gov</span> <span class="o">=</span> <span class="n">gov</span><span class="p">[</span><span class="o">~</span><span class="n">gov</span><span class="p">[</span><span class="s2">"ksh_code"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">EXCLUDED_KSH_CODES</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
+<span class="n">HCSO_CODE_BUDAPEST</span> <span class="o">=</span> <span class="mi">1357</span>
+<span class="n">budapest_county_code</span> <span class="o">=</span> <span class="n">gov</span><span class="p">[</span><span class="n">gov</span><span class="p">[</span><span class="s2">"county_name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"BUD"</span><span class="p">][</span><span class="s2">"county_code"</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">budapest_row</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([{</span>
+    <span class="s2">"ksh_code"</span><span class="p">:</span> <span class="n">HCSO_CODE_BUDAPEST</span><span class="p">,</span>
+    <span class="s2">"ksh_name"</span><span class="p">:</span> <span class="s2">"Budapest"</span><span class="p">,</span>
+    <span class="s2">"county_code"</span><span class="p">:</span> <span class="n">budapest_county_code</span><span class="p">,</span>
+    <span class="s2">"county_name"</span><span class="p">:</span> <span class="s2">"BUD"</span><span class="p">,</span>
+    <span class="s2">"Település</span><span class="se">\n</span><span class="s2">típusa"</span><span class="p">:</span> <span class="s2">"főváros"</span><span class="p">,</span>
+<span class="p">}])</span>
+
+<span class="n">gov</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">gov</span><span class="p">,</span> <span class="n">budapest_row</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">display</span><span class="p">(</span><span class="n">gov</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -7964,7 +7975,7 @@ assumed.</li>
 <th></th>
 <th>county_code</th>
 <th>ksh_code</th>
-<th>Vármegye</th>
+<th>county_name</th>
 <th>ksh_name</th>
 <th>Település\ntípusa</th>
 <th>Állandó férfi\nlakosság összesen</th>
@@ -7974,59 +7985,59 @@ assumed.</li>
 </thead>
 <tbody>
 <tr>
-<th>1</th>
+<th>0</th>
 <td>1</td>
 <td>9566</td>
 <td>BUD</td>
 <td>Budapest                 01</td>
 <td>fővárosi kerület</td>
-<td>11799</td>
-<td>13580</td>
-<td>25379</td>
+<td>11799.0</td>
+<td>13580.0</td>
+<td>25379.0</td>
 </tr>
 <tr>
-<th>2</th>
+<th>1</th>
 <td>1</td>
 <td>3179</td>
 <td>BUD</td>
 <td>Budapest                 02</td>
 <td>fővárosi kerület</td>
-<td>38659</td>
-<td>45138</td>
-<td>83797</td>
+<td>38659.0</td>
+<td>45138.0</td>
+<td>83797.0</td>
 </tr>
 <tr>
-<th>3</th>
+<th>2</th>
 <td>1</td>
 <td>18069</td>
 <td>BUD</td>
 <td>Budapest                 03</td>
 <td>fővárosi kerület</td>
-<td>56110</td>
-<td>65452</td>
-<td>121562</td>
+<td>56110.0</td>
+<td>65452.0</td>
+<td>121562.0</td>
 </tr>
 <tr>
-<th>4</th>
+<th>3</th>
 <td>1</td>
 <td>5467</td>
 <td>BUD</td>
 <td>Budapest                 04</td>
 <td>fővárosi kerület</td>
-<td>41788</td>
-<td>49026</td>
-<td>90814</td>
+<td>41788.0</td>
+<td>49026.0</td>
+<td>90814.0</td>
 </tr>
 <tr>
-<th>5</th>
+<th>4</th>
 <td>1</td>
 <td>13392</td>
 <td>BUD</td>
 <td>Budapest                 05</td>
 <td>fővárosi kerület</td>
-<td>11812</td>
-<td>12528</td>
-<td>24340</td>
+<td>11812.0</td>
+<td>12528.0</td>
+<td>24340.0</td>
 </tr>
 <tr>
 <th>...</th>
@@ -8042,68 +8053,68 @@ assumed.</li>
 <tr>
 <th>3173</th>
 <td>20</td>
-<td>29683</td>
-<td>ZAL</td>
-<td>Zalatárnok</td>
-<td>község</td>
-<td>315</td>
-<td>330</td>
-<td>645</td>
-</tr>
-<tr>
-<th>3174</th>
-<td>20</td>
 <td>9380</td>
 <td>ZAL</td>
 <td>Zalaújlak</td>
 <td>község</td>
-<td>59</td>
-<td>61</td>
-<td>120</td>
+<td>59.0</td>
+<td>61.0</td>
+<td>120.0</td>
 </tr>
 <tr>
-<th>3175</th>
+<th>3174</th>
 <td>20</td>
 <td>13736</td>
 <td>ZAL</td>
 <td>Zalavár</td>
 <td>község</td>
-<td>464</td>
-<td>476</td>
-<td>940</td>
+<td>464.0</td>
+<td>476.0</td>
+<td>940.0</td>
 </tr>
 <tr>
-<th>3176</th>
+<th>3175</th>
 <td>20</td>
 <td>17057</td>
 <td>ZAL</td>
 <td>Zalavég</td>
 <td>község</td>
-<td>187</td>
-<td>158</td>
-<td>345</td>
+<td>187.0</td>
+<td>158.0</td>
+<td>345.0</td>
 </tr>
 <tr>
-<th>3177</th>
+<th>3176</th>
 <td>20</td>
 <td>3726</td>
 <td>ZAL</td>
 <td>Zebecke</td>
 <td>község</td>
-<td>37</td>
-<td>34</td>
-<td>71</td>
+<td>37.0</td>
+<td>34.0</td>
+<td>71.0</td>
+</tr>
+<tr>
+<th>3177</th>
+<td>1</td>
+<td>1357</td>
+<td>BUD</td>
+<td>Budapest</td>
+<td>főváros</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
 </tr>
 </tbody>
 </table>
-<p>3177 rows × 8 columns</p>
+<p>3178 rows × 8 columns</p>
 </div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=17fe6100">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8113,7 +8124,7 @@ assumed.</li>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=602c3842">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8140,6 +8151,7 @@ assumed.</li>
     <span class="s2">"PPL"</span><span class="p">,</span>      <span class="c1"># Populated places</span>
     <span class="s2">"PPLA"</span><span class="p">,</span>     <span class="c1"># County seat</span>
     <span class="s2">"PPLA2"</span><span class="p">,</span>    <span class="c1"># "járás" seat</span>
+    <span class="s2">"PPLC"</span><span class="p">,</span>     <span class="c1"># Capital, i.e., Budapest</span>
     <span class="s2">"ADM2"</span><span class="p">,</span>     <span class="c1"># County district "járás" + capital districts</span>
 <span class="p">]</span>
 
@@ -8444,14 +8456,14 @@ assumed.</li>
 </tr>
 </tbody>
 </table>
-<p>10166 rows × 19 columns</p>
+<p>10167 rows × 19 columns</p>
 </div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6bc4a4fe">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8461,7 +8473,7 @@ assumed.</li>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=9877783f">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8500,7 +8512,7 @@ assumed.</li>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4967a758">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8510,7 +8522,7 @@ assumed.</li>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=45403aef">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=10">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8543,7 +8555,7 @@ assumed.</li>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b503aafd">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=11">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8553,7 +8565,7 @@ assumed.</li>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3fdaf3aa">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=12">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8574,7 +8586,6 @@ assumed.</li>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Name-only duplicate groups: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">spread_name_only</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Max spread:  </span><span class="si">{</span><span class="n">spread_name_only</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> km"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Mean spread: </span><span class="si">{</span><span class="n">spread_name_only</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> km"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"=&gt; Real, distinct settlements colliding on name, not coordinate noise."</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8590,14 +8601,13 @@ assumed.</li>
 <pre>Name-only duplicate groups: 53
 Max spread:  405.85 km
 Mean spread: 164.69 km
-=&gt; Real, distinct settlements colliding on name, not coordinate noise.
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7780c5a3">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=13">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8607,7 +8617,7 @@ Mean spread: 164.69 km
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f4aad13b">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=14">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8626,7 +8636,7 @@ Mean spread: 164.69 km
 <span class="n">unambiguous_merged</span> <span class="o">=</span> <span class="n">unambiguous_gov</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">geo</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">"norm"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="k">assert</span> <span class="ow">not</span> <span class="n">unambiguous_merged</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> <span class="s2">"❌ Unexpected duplicate match"</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"✅ One-to-one mathc only. Unambiguous settlements matched: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unambiguous_merged</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"✅ Unambiguous settlements matched: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unambiguous_merged</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8639,16 +8649,16 @@ Mean spread: 164.69 km
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Unambiguous records: 3124
+<pre>Unambiguous records: 3125
 Ambiguous records: 53
-✅ One-to-one mathc only. Unambiguous settlements matched: 3124
+✅ Unambiguous settlements matched: 3125
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3b04cf34">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=15">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8660,7 +8670,7 @@ Ambiguous records: 53
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=021176ca">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=16">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8670,7 +8680,7 @@ Ambiguous records: 53
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0219dbe2">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=17">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8719,7 +8729,7 @@ Ambiguous records: 53
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=95db3832">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=18">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8729,7 +8739,7 @@ Ambiguous records: 53
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=28d00ce4">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=19">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8766,7 +8776,7 @@ Ambiguous records: 53
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c96ad77a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=20">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8780,7 +8790,7 @@ modification date as a weaker fallback.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cfc1e39f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=21">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8790,7 +8800,7 @@ modification date as a weaker fallback.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f9ea3f19">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=22">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8834,7 +8844,7 @@ Name: max_pairwise_km, dtype: float64</pre>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3c251482">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=23">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8844,7 +8854,7 @@ Name: max_pairwise_km, dtype: float64</pre>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d89abcf2">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=24">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8881,7 +8891,7 @@ Name: max_pairwise_km, dtype: float64</pre>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=197d4678">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=25">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8891,7 +8901,7 @@ Name: max_pairwise_km, dtype: float64</pre>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=dda30695">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=26">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8926,8 +8936,8 @@ Name: max_pairwise_km, dtype: float64</pre>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Total KSH settlements: 3177
-Matched settlements: 3177
+<pre>Total KSH settlements: 3178
+Matched settlements: 3178
 Coverage: 100.00%
 ✅ All KSH settlements successfully matched to GeoNames
 </pre>

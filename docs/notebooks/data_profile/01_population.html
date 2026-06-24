@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>01_data_profile_population</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>01_population</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7845,6 +7845,7 @@ a.anchor-link {
 <li>integer type</li>
 <li>non-negative</li>
 <li>unique per year</li>
+<li>no aggregate Budapest record</li>
 </ul>
 </li>
 <li><p>Settlement names:</p>
@@ -8681,14 +8682,14 @@ a.anchor-link {
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>2013: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+2014: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2014: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
-2015: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+<pre>2015: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
 2016: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
 </pre>
 </div>
@@ -8975,13 +8976,60 @@ a.anchor-link {
 </div>
 </div>
 </div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8855f6a0">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Content-Finding-7-%E2%80%94-No-Aggregate-Budapest-Records-(Districts-Only)">Content Finding 7 — No Aggregate Budapest Records (Districts Only)<a class="anchor-link" href="#Content-Finding-7-%E2%80%94-No-Aggregate-Budapest-Records-(Districts-Only)">¶</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4e2b41ee">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">HCSO_CODE_BUDAPEST</span> <span class="o">=</span> <span class="mi">1357</span>  <span class="c1"># Looked up manually from HCSO's Helységnévkönyv registry</span>
+
+<span class="k">for</span> <span class="n">year</span><span class="p">,</span> <span class="n">xl</span> <span class="ow">in</span> <span class="n">year_to_xl_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">xl</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"KSH</span><span class="se">\n</span><span class="s2">kód"</span><span class="p">]</span> <span class="o">==</span> <span class="n">HCSO_CODE_BUDAPEST</span><span class="p">]</span><span class="o">.</span><span class="n">empty</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"❌ </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">: Budapest found"</span>
+    <span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"✅ Budapest as a whole is not present in population data"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>✅ Budapest as a whole is not present in population data
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=34ee8335">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Content-Finding-7-%E2%80%94-Settlement-Name-Integrity">Content Finding 7 — Settlement Name Integrity<a class="anchor-link" href="#Content-Finding-7-%E2%80%94-Settlement-Name-Integrity">¶</a></h2>
+<h2 id="Content-Finding-8-%E2%80%94-Settlement-Name-Integrity">Content Finding 8 — Settlement Name Integrity<a class="anchor-link" href="#Content-Finding-8-%E2%80%94-Settlement-Name-Integrity">¶</a></h2>
 </div>
 </div>
 </div>
@@ -8990,7 +9038,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">changes</span> <span class="o">=</span> <span class="p">{}</span>
@@ -9034,7 +9082,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">KNOWN_CHANGES</span> <span class="o">=</span> <span class="p">{</span>
@@ -9089,7 +9137,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Content-Finding-8-%E2%80%94-Settlement-Name-Without-Nulls">Content Finding 8 — Settlement Name Without Nulls<a class="anchor-link" href="#Content-Finding-8-%E2%80%94-Settlement-Name-Without-Nulls">¶</a></h2>
+<h2 id="Content-Finding-9-%E2%80%94-Settlement-Name-Without-Nulls">Content Finding 9 — Settlement Name Without Nulls<a class="anchor-link" href="#Content-Finding-9-%E2%80%94-Settlement-Name-Without-Nulls">¶</a></h2>
 </div>
 </div>
 </div>
@@ -9098,7 +9146,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">year</span><span class="p">,</span> <span class="n">xl</span> <span class="ow">in</span> <span class="n">year_to_xl_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -9131,7 +9179,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Content-Finding-9-%E2%80%94-Settlement-Name-Uniqueness">Content Finding 9 — Settlement Name Uniqueness<a class="anchor-link" href="#Content-Finding-9-%E2%80%94-Settlement-Name-Uniqueness">¶</a></h2>
+<h2 id="Content-Finding-10-%E2%80%94-Settlement-Name-Uniqueness">Content Finding 10 — Settlement Name Uniqueness<a class="anchor-link" href="#Content-Finding-10-%E2%80%94-Settlement-Name-Uniqueness">¶</a></h2>
 </div>
 </div>
 </div>
@@ -9140,7 +9188,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">year</span><span class="p">,</span> <span class="n">xl</span> <span class="ow">in</span> <span class="n">year_to_xl_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -9175,7 +9223,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Content-Finding-10-%E2%80%94-Settlement-Name-Redundant-Whitespace">Content Finding 10 — Settlement Name Redundant Whitespace<a class="anchor-link" href="#Content-Finding-10-%E2%80%94-Settlement-Name-Redundant-Whitespace">¶</a></h2>
+<h2 id="Content-Finding-11-%E2%80%94-Settlement-Name-Redundant-Whitespace">Content Finding 11 — Settlement Name Redundant Whitespace<a class="anchor-link" href="#Content-Finding-11-%E2%80%94-Settlement-Name-Redundant-Whitespace">¶</a></h2>
 </div>
 </div>
 </div>
@@ -9184,7 +9232,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">year</span><span class="p">,</span> <span class="n">xl</span> <span class="ow">in</span> <span class="n">year_to_xl_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -9236,7 +9284,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">year</span><span class="p">,</span> <span class="n">xl</span> <span class="ow">in</span> <span class="n">year_to_xl_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -9256,7 +9304,13 @@ a.anchor-link {
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>2011: ['0', 'fővárosi kerület', 'megye székhely', 'város', 'nagyközség', 'község', 'megyei jogú város']
 2012: ['0', 'fővárosi kerület', 'megye székhely', 'város', 'nagyközség', 'község', 'megyei jogú város']
-2013: ['0', 'fővárosi kerület', 'megye székhely', 'város', 'nagyközség', 'község', 'megye jogú város']
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>2013: ['0', 'fővárosi kerület', 'megye székhely', 'város', 'nagyközség', 'község', 'megye jogú város']
 </pre>
 </div>
 </div>
@@ -9264,14 +9318,14 @@ a.anchor-link {
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>2014: ['0', 'fővárosi kerület', 'megye székhely', 'város', 'nagyközség', 'község', 'megyei jogú város']
+2015: ['0', 'fővárosi kerület', 'megye székhely', 'város', 'nagyközség', 'község', 'megyei jogú város']
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>2015: ['0', 'fővárosi kerület', 'megye székhely', 'város', 'nagyközség', 'község', 'megyei jogú város']
-2016: ['0', 'fővárosi kerület', 'megye székhely', 'város', 'nagyközség', 'község', 'megyei jogú város']
+<pre>2016: ['0', 'fővárosi kerület', 'megye székhely', 'város', 'nagyközség', 'község', 'megyei jogú város']
 </pre>
 </div>
 </div>
@@ -9354,7 +9408,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Content-Finding-11-%E2%80%94-Settlement-Type-Evolution">Content Finding 11 — Settlement Type Evolution<a class="anchor-link" href="#Content-Finding-11-%E2%80%94-Settlement-Type-Evolution">¶</a></h2><p>Values evolved across three eras requiring normalization:</p>
+<h2 id="Content-Finding-12-%E2%80%94-Settlement-Type-Evolution">Content Finding 12 — Settlement Type Evolution<a class="anchor-link" href="#Content-Finding-12-%E2%80%94-Settlement-Type-Evolution">¶</a></h2><p>Values evolved across three eras requiring normalization:</p>
 <ul>
 <li>2011-2022: string labels (Megye era)</li>
 <li>2023-2025: string labels with Megye → Vármegye rename</li>
@@ -9381,7 +9435,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">KNOWN_SETTLEMENT_TYPES</span> <span class="o">=</span> <span class="p">{</span>
@@ -9449,7 +9503,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Content-Finding-12-%E2%80%94-Population-Validity">Content Finding 12 — Population Validity<a class="anchor-link" href="#Content-Finding-12-%E2%80%94-Population-Validity">¶</a></h2>
+<h2 id="Content-Finding-13-%E2%80%94-Population-Validity">Content Finding 13 — Population Validity<a class="anchor-link" href="#Content-Finding-13-%E2%80%94-Population-Validity">¶</a></h2>
 </div>
 </div>
 </div>
@@ -9458,7 +9512,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">POP_COLS</span> <span class="o">=</span> <span class="p">[</span>
@@ -9509,7 +9563,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">year</span><span class="p">,</span> <span class="n">xl</span> <span class="ow">in</span> <span class="n">year_to_xl_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -9554,7 +9608,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [25]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">name_maps</span> <span class="o">=</span> <span class="p">{}</span>
@@ -9604,7 +9658,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [25]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">county_code_name_maps</span> <span class="o">=</span> <span class="p">{}</span>
@@ -9659,7 +9713,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">county_maps</span> <span class="o">=</span> <span class="p">{}</span>
@@ -9705,7 +9759,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [28]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">KNOWN_COUNTY_REASSIGNMENTS</span> <span class="o">=</span> <span class="p">{</span>
