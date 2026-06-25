@@ -40,10 +40,11 @@ class GeoNamesSchema:
     ]
 
     allowed_feature_codes = {
-        "PPL",
-        "PPLA",
-        "PPLA2",
-        "ADM2",
+        "PPL",    # Populated places
+        "PPLA",   # County seat
+        "PPLA2",  # "járás" seat
+        "PPLC",   # Capital, i.e., Budapest
+        "ADM2",   # County district ("járás") + capital districts
     }
 
     # GeoNames admin1_code -> KSH county_code. See

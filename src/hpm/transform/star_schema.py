@@ -16,6 +16,32 @@ definition, so it's excluded from coordinate-match validation. See
 notebooks/03_integration_validation.py, EXCLUDED_KSH_CODES.
 """
 
+BUDAPEST_SETTLEMENT_CODE = 1357
+"""KSH code for Budapest as a whole entity. KSH only ever publishes
+population data for its 23 capital_district rows.
+
+Looked up manually from KSH's Helységnévkönyv settlement registry.
+"""
+
+
+def _budapest_dim_seed(population_df: pd.DataFrame) -> pd.DataFrame:
+    """The one synthetic row dim_settlement needs for Budapest.
+
+    `county_code` is derived from Budapest's own district rows, not
+    hardcoded.
+    """
+    districts = population_df[population_df["settlement_type"] == "capital_district"]
+    county_codes = districts["county_code"].unique()
+    assert len(county_codes) == 1, (
+        f"❌ Inconsistent county_code on Budapest districts: {county_codes}"
+    )
+
+    return pd.DataFrame([{
+        "settlement_code": BUDAPEST_SETTLEMENT_CODE,
+        "norm": "Budapest",
+        "county_code": int(county_codes[0]),
+    }])
+
 
 def _build_dim_county(df: pd.DataFrame) -> pd.DataFrame:
     """Extract a deduplicated county dimension from the wide population DataFrame.
@@ -82,6 +108,7 @@ def _build_dim_settlement(
     dim = dim.drop_duplicates(subset="settlement_code").sort_values(
         "settlement_code"
     )
+    dim = pd.concat([dim, _budapest_dim_seed(population_df)], ignore_index=True)
     dim = dim.reset_index(drop=True)
 
     geo = settlements_df.rename(columns={"name": "norm"})
