@@ -40,21 +40,6 @@ CREATE TABLE IF NOT EXISTS fact_population (
     FOREIGN KEY (settlement_code) REFERENCES dim_settlement(settlement_code),
     FOREIGN KEY (county_code) REFERENCES dim_county(county_code)
 );
-
-CREATE VIEW IF NOT EXISTS population_wide AS
-SELECT
-    fp.year,
-    s.settlement_name,
-    fp.settlement_type,
-    c.county_name,
-    s.latitude,
-    s.longitude,
-    fp.male_population,
-    fp.female_population,
-    fp.population
-FROM fact_population fp
-JOIN dim_settlement s ON fp.settlement_code = s.settlement_code
-LEFT JOIN dim_county c ON fp.county_code = c.county_code;
 """
 
 
