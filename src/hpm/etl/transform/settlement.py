@@ -11,7 +11,7 @@ import re
 import pandas as pd
 
 from hpm.settings import settings
-from hpm.transform.validate_settlement import validate_settlement_data
+from hpm.etl.transform.validate_settlement import validate_settlement_data
 
 
 class GeoNamesSchema:

@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 from hpm.settings import settings
-from hpm.transform.validate_population import validate_population_data
+from hpm.etl.transform.validate_population import validate_population_data
 
 
 class PopulationSchema:

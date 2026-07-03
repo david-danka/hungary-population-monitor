@@ -6,13 +6,13 @@ the CLI entrypoint and allows straightforward programmatic execution
 from scripts and tests.
 """
 
-from hpm.load import load_star_schema
-from hpm.transform import (
+from hpm.etl.load import load_star_schema
+from hpm.etl.transform import (
     transform_population_datasets,
     transform_settlement_data,
     build_star_schema,
 )
-from hpm.data_collection import (
+from hpm.etl.data_collection import (
     collect_population_datasets,
     collect_settlement_data,
 )
