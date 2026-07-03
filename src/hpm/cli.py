@@ -1,7 +1,7 @@
-"""Console entrypoint for the Hungary Population Monitor pipeline.
+"""Console entrypoint for the Hungary Population Monitor ETL pipeline.
 
 This module exposes a thin `cli` function intended to be used as a
-console-script entrypoint. It delegates to :func:`hpm.pipeline.run_pipeline`
+console-script entrypoint. It delegates to :func:`hpm.etl.run_pipeline`
 to execute the full ETL pipeline.
 """
 
