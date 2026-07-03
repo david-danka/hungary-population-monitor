@@ -5,7 +5,7 @@ console-script entrypoint. It delegates to :func:`hpm.pipeline.run_pipeline`
 to execute the full ETL pipeline.
 """
 
-from hpm.etl.pipeline import run_pipeline
+from hpm.etl import run_pipeline
 
 
 def cli() -> None:

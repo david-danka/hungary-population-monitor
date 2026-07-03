@@ -8,3 +8,9 @@ database. Use subpackages for concrete functionality: ``data_collection``,
 This module intentionally keeps the top-level API minimal; import the
 specific submodules to access collectors, transformers, and loaders.
 """
+
+from hpm.etl.pipeline import run_pipeline
+
+__all__ = [
+    "run_pipeline",
+]
