@@ -1,12 +1,6 @@
-"""Hungary Population Monitor package.
+"""Hungary Population Monitor ETL subpackage.
 
-Provides the high-level package for collecting, transforming and loading
-Hungarian population and settlement data into a star-schema SQLite
-database. Use subpackages for concrete functionality: ``data_collection``,
-``transform``, and ``load``.
-
-This module intentionally keeps the top-level API minimal; import the
-specific submodules to access collectors, transformers, and loaders.
+Provides the orchestrator function for running the complete ETL pipeline.
 """
 
 from hpm.etl.pipeline import run_pipeline
