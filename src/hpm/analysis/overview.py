@@ -174,7 +174,7 @@ def population_change_extremes(
     merged = merged.sort_values("absolute_change", ascending=False)
 
     result_cols = ["settlement_name", "absolute_change", "direction"]
-    return RankedChanges(
+    return PopulationChangeExtremes(
         top=merged.head(top_bottom_n)[result_cols],
         bottom=merged.tail(top_bottom_n)[result_cols],
     )
