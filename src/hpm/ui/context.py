@@ -10,6 +10,7 @@ from hpm.analysis.overview import (
     compound_annual_growth_rate,
     settlement_count,
     national_population_by_year,
+    settlements_by_year,
     settlement_rank_size_by_year,
     settlement_type_mix_by_year,
     county_population_by_year,
@@ -46,6 +47,10 @@ class OverviewPageContext:
     @cached_property
     def county_population(self):
         return county_population_by_year(self.df, self.last_year)
+
+    @cached_property
+    def settlements(self):
+        return settlements_by_year(self.df, self.last_year)
 
     @cached_property
     def settlement_type_mix(self):

@@ -84,6 +84,11 @@ def county_population_by_year(df: pd.DataFrame, year: int) -> pd.DataFrame:
         .sort_values("population")
     )
 
+def settlements_by_year(df: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Per-settlement snapshot for a year: location, type, and population."""
+    return df[df["year"] == year][
+        ["settlement_name", "settlement_type", "latitude", "longitude", "population"]
+    ]
 
 def settlement_type_mix_by_year(df: pd.DataFrame, year: int) -> pd.DataFrame:
     """

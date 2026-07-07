@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -52,13 +53,27 @@ def render_national_trend(ctx: OverviewPageContext):
 
 
 def render_map(ctx: OverviewPageContext):
-    fig = px.scatter_map(ctx.df)
-    """
-    fig = px.scatter_map(view, **common, size=size_basis, size_max=30, color_discrete_sequence=["steelblue"])
+    settlements = ctx.settlements
+    types = sorted(settlements["settlement_type"].unique())
+    selected_types = st.multiselect("Settlement type", types, default=types)
 
-    fig.update_layout(map_style="carto-positron", margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    view = settlements[settlements["settlement_type"].isin(selected_types)]
+
+    fig = px.scatter_map(
+        view,
+        lat="latitude",
+        lon="longitude",
+        size=np.sqrt(view["population"]),
+        size_max=30,
+        color="settlement_type",
+        hover_name="settlement_name",
+        hover_data={"population": True, "settlement_type": True},
+        zoom=6,
+        height=650,
+        title=f"Settlements by population, {ctx.last_year}",
+    )
+    fig.update_layout(map_style="carto-positron", margin={"r": 0, "t": 40, "l": 0, "b": 0})
     st.plotly_chart(fig, width="stretch", theme="streamlit")
-    """
 
 def render_county_ranking(ctx: OverviewPageContext):
     fig = px.bar(
@@ -191,6 +206,7 @@ def main():
     render_headline_metrics(ctx)
 
     st.divider()
+    render_section("🗺️ Settlement map", render_map, ctx)
     render_section("📈 System dynamics", render_national_trend, ctx)
     render_section("🧭 Geographic structure", render_county_ranking, ctx)
     render_section("📊 Population structure", render_structure, ctx)
