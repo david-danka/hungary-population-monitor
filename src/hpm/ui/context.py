@@ -5,17 +5,17 @@ import pandas as pd
 from hpm.analysis.datasets import population_settlements
 from hpm.analysis.overview import (
     year_bounds,
-    population_at,
-    pct_change,
-    cagr,
-    count_settlements,
-    national_timeseries,
-    rank_size_by_year,
-    settlement_mix_by_year,
+    national_population_at,
+    percent_change,
+    compound_annual_growth_rate,
+    settlement_count,
+    national_population_by_year,
+    settlement_rank_size_by_year,
+    settlement_type_mix_by_year,
     county_population_by_year,
-    top_settlements,
-    absolutes,
-    RankedChanges,
+    largest_settlements_by_year,
+    population_change_extremes,
+    PopulationChangeExtremes,
 )
 from hpm.ui.selectors import OverviewParams
 
@@ -40,30 +40,30 @@ class OverviewPageContext:
     params: OverviewParams
 
     @cached_property
-    def national_ts(self):
-        return national_timeseries(self.df)
+    def national_trend(self):
+        return national_population_by_year(self.df)
 
     @cached_property
-    def county_pop(self):
+    def county_population(self):
         return county_population_by_year(self.df, self.last_year)
 
     @cached_property
-    def settlement_mix(self):
-        return settlement_mix_by_year(self.df, self.last_year)
+    def settlement_type_mix(self):
+        return settlement_type_mix_by_year(self.df, self.last_year)
 
     @cached_property
-    def rank_size(self):
-        return rank_size_by_year(self.df, self.last_year)
+    def settlement_rank(self):
+        return settlement_rank_size_by_year(self.df, self.last_year)
 
     @cached_property
-    def top_settlements(self):
-        return top_settlements(
+    def largest_settlements(self):
+        return largest_settlements_by_year(
             self.df, self.last_year, self.params.top_n_settlements
         )
 
     @cached_property
-    def absolutes(self) -> RankedChanges:
-        return absolutes(
+    def change_extremes(self) -> PopulationChangeExtremes:
+        return population_change_extremes(
             self.df, self.first_year, self.last_year, self.params.top_bottom_n
         )
 
@@ -72,18 +72,20 @@ def load_overview_context(params: OverviewParams) -> OverviewPageContext:
     df = population_settlements()
     first_year, last_year = year_bounds(df)
 
-    latest = population_at(df, last_year)
-    previous = population_at(df, last_year - 1)
-    first = population_at(df, first_year)
+    latest = national_population_at(df, last_year)
+    previous = national_population_at(df, last_year - 1)
+    first = national_population_at(df, first_year)
 
     metrics = HeadlineMetrics(
         latest=latest,
         previous=previous,
         first=first,
         change=latest - previous,
-        change_pct=pct_change(first, latest),
-        cagr=cagr(first, latest, last_year - first_year),
-        n_settlements=count_settlements(df),
+        change_pct=percent_change(first, latest),
+        cagr=compound_annual_growth_rate(
+            first, latest, last_year - first_year
+        ),
+        n_settlements=settlement_count(df),
     )
 
     return OverviewPageContext(
