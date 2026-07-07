@@ -6,6 +6,7 @@ to execute the full ETL pipeline.
 """
 
 from hpm.etl import run_pipeline
+from hpm.bootstrap import prepare
 
 
 def cli() -> None:
@@ -17,3 +18,4 @@ def cli() -> None:
     """
 
     run_pipeline()
+    prepare()
