@@ -1,0 +1,19 @@
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class OverviewParams:
+    top_n_settlements: int = 20
+    top_bottom_n: int = 10
+
+    def __post_init__(self):
+        if self.top_n_settlements <= 0:
+            raise ValueError("top_n_settlements must be positive")
+        if self.top_bottom_n <= 0:
+            raise ValueError("top_bottom_n must be positive")
+
+
+def read_overview_params() -> OverviewParams:
+    """The only place that touches st.* widgets for this page."""
+    # e.g. top_n = st.sidebar.slider("Top N", 5, 50, 20)
+    return OverviewParams()
