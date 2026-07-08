@@ -66,24 +66,6 @@ def settlement_count(df: pd.DataFrame) -> int:
     return int(df["settlement_name"].nunique())
 
 
-def county_population_by_year(df: pd.DataFrame, year: int) -> pd.DataFrame:
-    """
-    County population for selected year
-
-    Args:
-        df (pd.DataFrame): population_settlements wide table
-        year (int): year to filter by
-
-    Returns:
-        pd.DataFrame: county-level population table for `year`
-    """
-    return (
-        df[df["year"] == year]
-        .groupby("county_name", as_index=False)["population"]
-        .sum()
-        .sort_values("population")
-    )
-
 def settlements_by_year(df: pd.DataFrame, year: int) -> pd.DataFrame:
     """Per-settlement snapshot for a year: location, type, and population."""
     return df[df["year"] == year][

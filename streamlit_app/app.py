@@ -5,6 +5,7 @@ prepare()
 
 pg = st.navigation([
     st.Page("pages/overview.py", title="Overview", icon=":material/insights:", default=True),
+    st.Page("pages/geography.py", title="Geography", icon=":material/thumb_up:",),
     st.Page("pages/map.py", title="Map", icon=":material/map:"),
     st.Page("pages/trends.py", title="Trends", icon=":material/trending_up:"),
     st.Page("pages/insights.py", title="Insights", icon=":material/location_city:"),
