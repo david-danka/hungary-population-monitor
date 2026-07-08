@@ -24,7 +24,16 @@ from hpm.analysis.geography import (
     concentration_share_trend,
     largest_settlement_share_by_county,
 )
-from hpm.ui.selectors import OverviewParams, GeographyParams
+from hpm.analysis.change import (
+    settlement_change,
+    national_decline_contribution,
+    count_by_direction,
+    total_change_by_direction,
+    relative_change_category,
+    yearly_change_totals,
+    
+)
+from hpm.ui.selectors import OverviewParams, GeographyParams, ChangeParams
 
 
 @dataclass(frozen=True)
@@ -122,7 +131,9 @@ class GeographyPageContext:
 
     @cached_property
     def county_change(self) -> pd.DataFrame:
-        return county_population_change(self.df, self.first_year, self.last_year)
+        return county_population_change(
+            self.df, self.first_year, self.last_year
+        )
 
     @cached_property
     def county_geojson(self) -> dict:
@@ -143,3 +154,47 @@ def load_geography_context(params: GeographyParams) -> GeographyPageContext:
     return GeographyPageContext(
         df=df, first_year=first_year, last_year=last_year, params=params
     )
+
+@dataclass
+class ChangePageContext:
+    df: pd.DataFrame
+    first_year: int
+    last_year: int
+    params: ChangeParams
+
+    @cached_property
+    def change(self) -> pd.DataFrame:
+        return settlement_change(
+            self.df, self.first_year, self.last_year, self.params.min_baseline_pop
+        )
+    
+    @cached_property
+    def direction_counts(self) -> dict[str, int]:
+        return count_by_direction(self.change)
+    
+    @cached_property
+    def total_change_by_direction(self) -> pd.DataFrame:
+        return total_change_by_direction(self.change)
+    
+    @cached_property
+    def national_pct_change(self) -> float:
+        first = national_population_at(self.df, self.first_year)
+        last = national_population_at(self.df, self.last_year)
+        return percent_change(first, last)
+    
+    @cached_property
+    def change_with_category(self) -> pd.DataFrame:
+        return relative_change_category(self.change, self.national_pct_change)
+
+    @cached_property
+    def yearly_totals(self) -> pd.DataFrame:
+        return yearly_change_totals(self.df)
+
+    def decline_contribution(self, n: int) -> float:
+        return national_decline_contribution(self.change, n)
+
+
+def load_change_context(params: ChangeParams) -> ChangePageContext:
+    df = population_settlements()
+    first_year, last_year = year_bounds(df)
+    return ChangePageContext(df=df, first_year=first_year, last_year=last_year, params=params)
