@@ -16,6 +16,8 @@ from hpm.analysis.overview import (
     county_population_by_year,
     largest_settlements_by_year,
     population_change_extremes,
+    concentration_share_by_year,
+    closest_settlement_by_population,
     PopulationChangeExtremes,
 )
 from hpm.ui.selectors import OverviewParams
@@ -71,7 +73,15 @@ class OverviewPageContext:
         return population_change_extremes(
             self.df, self.first_year, self.last_year, self.params.top_bottom_n
         )
+    
+    def concentration_share(self, n: int) -> float:
+        return concentration_share_by_year(self.df, self.last_year, n)
 
+    @cached_property
+    def decline_yardstick(self) -> pd.Series:
+        return closest_settlement_by_population(
+            self.df, self.last_year, abs(self.metrics.change)
+        )
 
 def load_overview_context(params: OverviewParams) -> OverviewPageContext:
     df = population_settlements()

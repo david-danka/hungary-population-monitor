@@ -183,3 +183,18 @@ def population_change_extremes(
         top=merged.head(top_bottom_n)[result_cols],
         bottom=merged.tail(top_bottom_n)[result_cols],
     )
+
+
+def concentration_share_by_year(df: pd.DataFrame, year: int, n: int) -> float:
+    """% of national population held by the N largest settlements in a year."""
+    year_df = df[df["year"] == year]
+    top_n_total = year_df.nlargest(n, "population")["population"].sum()
+    national_total = year_df["population"].sum()
+    return top_n_total / national_total * 100
+
+
+def closest_settlement_by_population(df: pd.DataFrame, year: int, target: float) -> pd.Series:
+    """Settlement whose population in `year` is closest to `target`."""
+    year_df = df[df["year"] == year]
+    idx = (year_df["population"] - target).abs().idxmin()
+    return year_df.loc[idx, ["settlement_name", "population"]]
