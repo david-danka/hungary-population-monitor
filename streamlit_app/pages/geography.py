@@ -74,29 +74,14 @@ def render_dominance_table(ctx: GeographyPageContext):
     st.plotly_chart(fig, width="stretch")
 
 
-def index_to_first_year(view, group_col):
-    view = view.copy()
-
-    first_vals = (
-        view.sort_values("year").groupby(group_col)["population"].first()
-    )
-
-    view["indexed"] = view.apply(
-        lambda r: r["population"] / first_vals[r[group_col]] * 100, axis=1
-    )
-
-    return view
-
-
 def render_county_trends(ctx: GeographyPageContext):
     st.subheader("County population over time")
     indexed = st.checkbox("Index to first year = 100", value=True)
-    view = ctx.county_population_trend
-
     if indexed:
-        view = index_to_first_year(view, "county_name")
+        view = ctx.county_trend_indexed
         y_col = "indexed"
     else:
+        view = ctx.county_population_trend
         y_col = "population"
 
     st.plotly_chart(

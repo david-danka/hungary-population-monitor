@@ -68,3 +68,12 @@ def largest_settlement_share_by_county(df: pd.DataFrame, year: int) -> pd.DataFr
 def county_population_trend(df: pd.DataFrame) -> pd.DataFrame:
     """County-level population trajectory across all years."""
     return df.groupby(["county_name", "year"], as_index=False)["population"].sum()
+
+
+def index_to_first_year(df: pd.DataFrame, group_col: str) -> pd.DataFrame:
+    """Indexes population to 100 at each group's first year, for trajectory
+    comparison across groups with different absolute scales."""
+    df = df.copy()
+    first_vals = df.sort_values("year").groupby(group_col)["population"].transform("first")
+    df["indexed"] = df["population"] / first_vals * 100
+    return df
