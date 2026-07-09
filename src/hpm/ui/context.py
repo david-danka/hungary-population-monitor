@@ -163,6 +163,7 @@ class ChangePageContext:
     df: pd.DataFrame
     first_year: int
     last_year: int
+    n_largest_losers: int
 
     @cached_property
     def change(self) -> pd.DataFrame:
@@ -191,12 +192,13 @@ class ChangePageContext:
     @cached_property
     def yearly_totals(self) -> pd.DataFrame:
         return yearly_change_totals(self.df)
+    
+    @cached_property
+    def decline_contribution(self) -> float:
+        return national_decline_contribution(self.change, self.n_largest_losers)
 
-    def decline_contribution(self, n: int) -> float:
-        return national_decline_contribution(self.change, n)
 
-
-def load_change_context() -> ChangePageContext:
+def load_change_context(n_largest_losers: int) -> ChangePageContext:
     df = population_settlements()
     first_year, last_year = year_bounds(df)
-    return ChangePageContext(df=df, first_year=first_year, last_year=last_year)
+    return ChangePageContext(df=df, first_year=first_year, last_year=last_year, n_largest_losers=n_largest_losers)

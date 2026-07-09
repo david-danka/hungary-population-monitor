@@ -22,7 +22,7 @@ RELATIVE_CATEGORY_COLORS = {
 
 @st.cache_data()
 def get_context() -> ChangePageContext:
-    return load_change_context()
+    return load_change_context(n_largest_losers=N_DECLINE_CONTRIBUTION)
 
 
 def render_thesis():
@@ -35,7 +35,7 @@ def render_thesis():
 
 
 def render_decline_contribution(ctx: ChangePageContext):
-    pct = ctx.decline_contribution(N_DECLINE_CONTRIBUTION)
+    pct = ctx.decline_contribution
     st.info(
         f"📌 The **{N_DECLINE_CONTRIBUTION} settlements** with the steepest population losses "
         f"account for **{pct:.1f}%** of all population lost across every "
