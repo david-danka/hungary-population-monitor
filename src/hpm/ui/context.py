@@ -41,6 +41,7 @@ class AppData:
     """
     The one raw dataset every page's context is built from.
     """
+
     df: pd.DataFrame
     first_year: int
     last_year: int
@@ -50,7 +51,6 @@ def load_app_data() -> AppData:
     df = population_settlements()
     first_year, last_year = year_bounds(df)
     return AppData(df=df, first_year=first_year, last_year=last_year)
-
 
 
 @dataclass(frozen=True)
@@ -172,34 +172,38 @@ def load_geography_context(params: GeographyParams) -> GeographyPageContext:
         df=df, first_year=first_year, last_year=last_year, params=params
     )
 
+
 @dataclass
 class ChangePageContext:
     """No params — every property here is the full, unfiltered answer.
     Widgets that slice/filter (min_baseline_pop, row counts, ranking metric,
     population range) live in page.py as local st.* calls over these."""
+
     app: AppData
     n_largest_losers: int
 
     @cached_property
     def change(self) -> pd.DataFrame:
         return settlement_change(
-            self.app.df, self.app.first_year, self.app.last_year,
+            self.app.df,
+            self.app.first_year,
+            self.app.last_year,
         )
-    
+
     @cached_property
     def direction_counts(self) -> dict[str, int]:
         return count_by_direction(self.change)
-    
+
     @cached_property
     def total_change_by_direction(self) -> pd.DataFrame:
         return total_change_by_direction(self.change)
-    
+
     @cached_property
     def national_pct_change(self) -> float:
         first = national_population_at(self.app.df, self.app.first_year)
         last = national_population_at(self.app.df, self.app.last_year)
         return percent_change(first, last)
-    
+
     @cached_property
     def change_with_category(self) -> pd.DataFrame:
         return relative_change_category(self.change, self.national_pct_change)
@@ -207,11 +211,15 @@ class ChangePageContext:
     @cached_property
     def yearly_totals(self) -> pd.DataFrame:
         return yearly_change_totals(self.app.df)
-    
+
     @cached_property
     def decline_contribution(self) -> float:
-        return national_decline_contribution(self.change, self.n_largest_losers)
+        return national_decline_contribution(
+            self.change, self.n_largest_losers
+        )
 
 
-def build_change_context(app: AppData, n_largest_losers: int) -> ChangePageContext:
+def build_change_context(
+    app: AppData, n_largest_losers: int
+) -> ChangePageContext:
     return ChangePageContext(app=app, n_largest_losers=n_largest_losers)
