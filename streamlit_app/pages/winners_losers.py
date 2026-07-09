@@ -4,8 +4,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from hpm.ui.context import load_change_context, ChangePageContext
-
+from shared import get_app_data
+from hpm.ui.context import build_change_context, ChangePageContext
 
 # Editorial constants, not exposed to users
 DEFAULT_MIN_BASELINE_POP = 200
@@ -22,7 +22,8 @@ RELATIVE_CATEGORY_COLORS = {
 
 @st.cache_data()
 def get_context() -> ChangePageContext:
-    return load_change_context(n_largest_losers=N_DECLINE_CONTRIBUTION)
+    app = get_app_data()
+    return build_change_context(app=app, n_largest_losers=N_DECLINE_CONTRIBUTION)
 
 
 def render_thesis():
@@ -104,7 +105,7 @@ def render_growth_decline_summary(ctx):
     st.plotly_chart(fig, width="stretch")
     st.caption(
         f"Net change here should roughly match the national YoY figure "
-        f"on Overview ({ctx.first_year}→{ctx.last_year} settlement-level sum); "
+        f"on Overview ({ctx.app.first_year}→{ctx.app.last_year} settlement-level sum); "
         "small differences can arise from settlements appearing/merging between years."
     )
 
@@ -165,7 +166,7 @@ def render_map_2(ctx: ChangePageContext):
         hover_data={"pct_change": ":.1f", "abs_change": ":,.0f"},
         zoom=6,
         height=650,
-        title=f"Settlement performance, {ctx.first_year} → {ctx.last_year}",
+        title=f"Settlement performance, {ctx.app.first_year} → {ctx.app.last_year}",
     )
     fig.update_layout(
         map_style="carto-positron", margin={"r": 0, "t": 40, "l": 0, "b": 0}
@@ -208,7 +209,7 @@ def render_map(ctx: ChangePageContext):
         hover_data={"pct_change": ":.1f", "abs_change": ":,.0f"},
         zoom=6,
         height=650,
-        title=f"Population change by settlement, {ctx.first_year} → {ctx.last_year}",
+        title=f"Population change by settlement, {ctx.app.first_year} → {ctx.app.last_year}",
     )
     fig.update_layout(
         map_style="carto-positron", margin={"r": 0, "t": 40, "l": 0, "b": 0}

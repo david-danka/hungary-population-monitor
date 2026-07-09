@@ -37,6 +37,23 @@ from hpm.ui.selectors import OverviewParams, GeographyParams
 
 
 @dataclass(frozen=True)
+class AppData:
+    """
+    The one raw dataset every page's context is built from.
+    """
+    df: pd.DataFrame
+    first_year: int
+    last_year: int
+
+
+def load_app_data() -> AppData:
+    df = population_settlements()
+    first_year, last_year = year_bounds(df)
+    return AppData(df=df, first_year=first_year, last_year=last_year)
+
+
+
+@dataclass(frozen=True)
 class HeadlineMetrics:
     latest: int
     previous: int
@@ -160,15 +177,13 @@ class ChangePageContext:
     """No params — every property here is the full, unfiltered answer.
     Widgets that slice/filter (min_baseline_pop, row counts, ranking metric,
     population range) live in page.py as local st.* calls over these."""
-    df: pd.DataFrame
-    first_year: int
-    last_year: int
+    app: AppData
     n_largest_losers: int
 
     @cached_property
     def change(self) -> pd.DataFrame:
         return settlement_change(
-            self.df, self.first_year, self.last_year,
+            self.app.df, self.app.first_year, self.app.last_year,
         )
     
     @cached_property
@@ -181,8 +196,8 @@ class ChangePageContext:
     
     @cached_property
     def national_pct_change(self) -> float:
-        first = national_population_at(self.df, self.first_year)
-        last = national_population_at(self.df, self.last_year)
+        first = national_population_at(self.app.df, self.app.first_year)
+        last = national_population_at(self.app.df, self.app.last_year)
         return percent_change(first, last)
     
     @cached_property
@@ -191,14 +206,12 @@ class ChangePageContext:
 
     @cached_property
     def yearly_totals(self) -> pd.DataFrame:
-        return yearly_change_totals(self.df)
+        return yearly_change_totals(self.app.df)
     
     @cached_property
     def decline_contribution(self) -> float:
         return national_decline_contribution(self.change, self.n_largest_losers)
 
 
-def load_change_context(n_largest_losers: int) -> ChangePageContext:
-    df = population_settlements()
-    first_year, last_year = year_bounds(df)
-    return ChangePageContext(df=df, first_year=first_year, last_year=last_year, n_largest_losers=n_largest_losers)
+def build_change_context(app: AppData, n_largest_losers: int) -> ChangePageContext:
+    return ChangePageContext(app=app, n_largest_losers=n_largest_losers)
