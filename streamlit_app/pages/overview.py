@@ -12,14 +12,16 @@ CONCENTRATION_N = 50
 TOP_BOTTOM_N = 10
 
 
-
 @st.cache_data()
-def get_context() -> OverviewPageContext:
+def get_context(
+    concentration_n: int,
+    top_bottom_n: int,
+) -> OverviewPageContext:
     app = get_app_data()
     ctx = build_overview_context(
         app=app,
-        top_n_settlements=CONCENTRATION_N,
-        top_bottom_n=TOP_BOTTOM_N
+        top_n_settlements=concentration_n,
+        top_bottom_n=top_bottom_n
     )
     warm_cached_properties(ctx)
     return ctx
@@ -107,7 +109,10 @@ def render_section(title, fn: Callable[[OverviewPageContext], None], ctx):
 def main():
     st.set_page_config(page_title="The Shrinking Whole", layout="wide")
 
-    ctx = get_context()
+    ctx = get_context(
+        concentration_n=CONCENTRATION_N,
+        top_bottom_n=TOP_BOTTOM_N,
+    )
 
     render_thesis()
     render_headline_metrics(ctx)
