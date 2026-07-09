@@ -43,6 +43,16 @@ from hpm.analysis.settlements import (
     gender_ratio_series,
     SettlementSummary,
 )
+from hpm.analysis.facts import (
+    find_attribute_changes,
+    find_appearance_events,
+    least_populated,
+    most_male_skewed,
+    most_female_skewed,
+    most_recent_new_settlement,
+    most_recent_county_change,
+    build_history,
+)
 
 
 @dataclass(frozen=True)
@@ -177,15 +187,15 @@ class GeographyPageContext:
         return largest_settlement_share_by_county(
             self.app.df, self.app.last_year
         )
-    
+
     @cached_property
     def county_population_trend(self) -> pd.DataFrame:
         return county_population_trend(self.app.df)
-    
+
     @cached_property
     def county_trend_indexed(self) -> pd.DataFrame:
         return index_to_first_year(self.county_population_trend, "county_name")
-    
+
     @cached_property
     def lorenz(self) -> pd.DataFrame:
         return lorenz_curve(self.app.df, self.app.last_year)
@@ -275,10 +285,82 @@ class ExplorerPageContext:
             self.app.first_year,
             self.app.last_year,
         )
-    
+
     def gender_ratio(self, settlement_name: str) -> pd.DataFrame:
         return gender_ratio_series(self.app.df, settlement_name)
 
 
 def build_explorer_context(app: AppData) -> ExplorerPageContext:
     return ExplorerPageContext(app=app)
+
+
+@dataclass
+class FactsPageContext:
+    app: AppData
+    min_pop_for_gender_ratio: int
+
+    @cached_property
+    def appearance_events(self) -> tuple[pd.Series, pd.Series]:
+        return find_appearance_events(self.app.df)
+
+    @cached_property
+    def appeared(self) -> pd.Series:
+        return self.appearance_events[0]
+
+    @cached_property
+    def disappeared(self) -> pd.Series:
+        return self.appearance_events[1]
+
+    @cached_property
+    def county_changes(self) -> pd.DataFrame:
+        return find_attribute_changes(self.app.df, "county_name")
+
+    @cached_property
+    def type_changes(self) -> pd.DataFrame:
+        return find_attribute_changes(self.app.df, "settlement_type")
+
+    @cached_property
+    def history(self) -> dict[int, dict]:
+        return build_history(
+            self.appeared, self.county_changes, self.type_changes
+        )
+
+    @cached_property
+    def most_male_skewed_settlement(self) -> pd.Series:
+        return most_male_skewed(
+            self.app.df,
+            self.app.last_year,
+            min_pop=self.min_pop_for_gender_ratio,
+        )
+
+    @cached_property
+    def most_female_skewed_settlement(self) -> pd.Series:
+        return most_female_skewed(
+            self.app.df,
+            self.app.last_year,
+            min_pop=self.min_pop_for_gender_ratio,
+        )
+
+    @cached_property
+    def smallest_settlement_first_year(self) -> pd.Series:
+        return least_populated(self.app.df, self.app.first_year)
+
+    @cached_property
+    def smallest_settlement_last_year(self) -> pd.Series:
+        return least_populated(self.app.df, self.app.last_year)
+
+    @cached_property
+    def newest_settlement(self) -> tuple[str, int] | None:
+        return most_recent_new_settlement(self.appeared)
+
+    @cached_property
+    def latest_county_change(self) -> pd.Series | None:
+        return most_recent_county_change(self.county_changes)
+
+
+def build_facts_context(
+    app: AppData, min_pop_for_gender_ratio: int
+) -> FactsPageContext:
+    return FactsPageContext(
+        app=app, min_pop_for_gender_ratio=min_pop_for_gender_ratio
+    )
