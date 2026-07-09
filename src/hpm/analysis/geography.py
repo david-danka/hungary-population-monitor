@@ -1,4 +1,4 @@
-# analysis/geography.py — new module
+import numpy as np
 import pandas as pd
 
 def county_population_by_year(df: pd.DataFrame, year: int) -> pd.DataFrame:
@@ -77,3 +77,35 @@ def index_to_first_year(df: pd.DataFrame, group_col: str) -> pd.DataFrame:
     first_vals = df.sort_values("year").groupby(group_col)["population"].transform("first")
     df["indexed"] = df["population"] / first_vals * 100
     return df
+
+
+def gini_coefficient(values: np.ndarray) -> float:
+    """Gini coefficient of inequality for an array of non-negative values."""
+    values = np.sort(values)
+    n = len(values)
+    cumulative = np.cumsum(values)
+    return (n + 1 - 2 * np.sum(cumulative) / cumulative[-1]) / n
+
+
+def lorenz_curve(df: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Cumulative share of settlements vs. cumulative share of population
+    they hold, for a Lorenz curve. Sorted ascending by population."""
+    year_df = df[df["year"] == year].sort_values("population").reset_index(drop=True)
+    total_pop = year_df["population"].sum()
+
+    cum_population_pct = year_df["population"].cumsum() / total_pop
+    cum_settlements_pct = (year_df.index + 1) / len(year_df)
+
+    return pd.DataFrame({
+        "cum_settlements_pct": np.insert(cum_settlements_pct.values, 0, 0),
+        "cum_population_pct": np.insert(cum_population_pct.values, 0, 0),
+    })
+
+
+def settlement_gini_by_year(df: pd.DataFrame) -> pd.DataFrame:
+    """Settlement-level population inequality (Gini) per year."""
+    records = [
+        {"year": year, "gini": gini_coefficient(year_df["population"].values)}
+        for year, year_df in df.groupby("year")
+    ]
+    return pd.DataFrame(records).sort_values("year")

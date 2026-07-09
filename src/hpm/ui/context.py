@@ -25,6 +25,8 @@ from hpm.analysis.geography import (
     largest_settlement_share_by_county,
     county_population_trend,
     index_to_first_year,
+    lorenz_curve,
+    settlement_gini_by_year,
 )
 from hpm.analysis.change import (
     settlement_change,
@@ -183,6 +185,14 @@ class GeographyPageContext:
     @cached_property
     def county_trend_indexed(self) -> pd.DataFrame:
         return index_to_first_year(self.county_population_trend, "county_name")
+    
+    @cached_property
+    def lorenz(self) -> pd.DataFrame:
+        return lorenz_curve(self.app.df, self.app.last_year)
+
+    @cached_property
+    def gini_trend(self) -> pd.DataFrame:
+        return settlement_gini_by_year(self.app.df)
 
 
 def build_geography_context(

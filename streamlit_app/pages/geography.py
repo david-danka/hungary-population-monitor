@@ -90,6 +90,38 @@ def render_county_trends(ctx: GeographyPageContext):
     )
 
 
+def render_lorenz(ctx: GeographyPageContext):
+    st.subheader(
+        f"Lorenz curve: settlement population inequality, {ctx.app.last_year}"
+    )
+    fig = px.line(
+        ctx.lorenz,
+        x="cum_settlements_pct",
+        y="cum_population_pct",
+        title="Cumulative population share by cumulative settlement share",
+    )
+    fig.add_shape(type="line", x0=0, y0=0, x1=1, y1=1, line=dict(dash="dash"))
+    fig.update_layout(
+        xaxis_tickformat=".0%",
+        yaxis_tickformat=".0%",
+        xaxis_title="Settlements",
+        yaxis_title="Population",
+    )
+    st.plotly_chart(fig, width="stretch")
+
+
+def render_gini_trend(ctx: GeographyPageContext):
+    st.subheader("Settlement inequality over time (Gini coefficient)")
+    fig = px.line(ctx.gini_trend, x="year", y="gini")
+    fig.update_layout(yaxis_range=[0, 1], yaxis_title="Gini coefficient")
+    st.plotly_chart(fig, width="stretch")
+    latest_gini = ctx.gini_trend.iloc[-1]["gini"]
+    st.caption(
+        f"Gini as of {ctx.app.last_year}: **{latest_gini:.3f}**. "
+        "0 = every settlement holds an equal share; 1 = one settlement holds everything."
+    )
+
+
 def main():
     st.set_page_config(
         page_title="Geography — Hungary Population", layout="wide"
@@ -105,6 +137,14 @@ def main():
     st.divider()
     render_concentration_trend(ctx)
     st.divider()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        render_lorenz(ctx)
+    with col2:
+        render_gini_trend(ctx)
+    st.divider()
+
     render_dominance_table(ctx)
     st.divider()
     render_county_trends(ctx)
