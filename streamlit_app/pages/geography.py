@@ -2,13 +2,21 @@
 import plotly.express as px
 import streamlit as st
 
-from hpm.ui.context import load_geography_context, GeographyPageContext
-from hpm.ui.selectors import read_geography_params, GeographyParams
+from shared import get_app_data, warm_cached_properties
+from hpm.ui.context import build_geography_context, GeographyPageContext
 
+# Editorial constants
+CONCENTRATION_N = 10
 
 @st.cache_data()
-def get_context(params: GeographyParams) -> GeographyPageContext:
-    return load_geography_context(params)
+def get_context(concentration_n: int) -> GeographyPageContext:
+    app = get_app_data()
+    ctx = build_geography_context(
+        app=app,
+        concentration_n=concentration_n,
+    )
+    warm_cached_properties(ctx)
+    return ctx
 
 
 def render_thesis():
@@ -38,7 +46,7 @@ def render_choropleth(ctx: GeographyPageContext):
 
 
 def render_concentration_trend(ctx: GeographyPageContext):
-    st.subheader(f"Share of national population in the {ctx.params.concentration_n} largest settlements")
+    st.subheader(f"Share of national population in the {CONCENTRATION_N} largest settlements")
     st.plotly_chart(
         px.line(ctx.concentration_trend, x="year", y="share", markers=True),
         width="stretch",
@@ -46,7 +54,7 @@ def render_concentration_trend(ctx: GeographyPageContext):
 
 
 def render_dominance_table(ctx: GeographyPageContext):
-    st.subheader(f"County seat dominance, {ctx.last_year}")
+    st.subheader(f"County seat dominance, {ctx.app.last_year}")
     st.caption("How much of each county's population lives in its single largest settlement.")
 
     fig = px.bar(
@@ -61,8 +69,9 @@ def render_dominance_table(ctx: GeographyPageContext):
 def main():
     st.set_page_config(page_title="Geography — Hungary Population", layout="wide")
 
-    params = read_geography_params()
-    ctx = get_context(params)
+    ctx = get_context(
+        concentration_n=CONCENTRATION_N,
+    )
 
     render_thesis()
     st.divider()

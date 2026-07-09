@@ -32,7 +32,6 @@ from hpm.analysis.change import (
     relative_change_category,
     yearly_change_totals,
 )
-from hpm.ui.selectors import GeographyParams
 
 
 @dataclass(frozen=True)
@@ -145,15 +144,13 @@ def build_overview_context(
 
 @dataclass
 class GeographyPageContext:
-    df: pd.DataFrame
-    first_year: int
-    last_year: int
-    params: GeographyParams
+    app: AppData
+    concentration_n: int
 
     @cached_property
     def county_change(self) -> pd.DataFrame:
         return county_population_change(
-            self.df, self.first_year, self.last_year
+            self.app.df, self.app.first_year, self.app.last_year
         )
 
     @cached_property
@@ -162,19 +159,19 @@ class GeographyPageContext:
 
     @cached_property
     def concentration_trend(self) -> pd.DataFrame:
-        return concentration_share_trend(self.df, self.params.concentration_n)
+        return concentration_share_trend(self.app.df, self.concentration_n)
 
     @cached_property
     def largest_settlement_dominance(self) -> pd.DataFrame:
-        return largest_settlement_share_by_county(self.df, self.last_year)
+        return largest_settlement_share_by_county(
+            self.app.df, self.app.last_year
+        )
 
 
-def load_geography_context(params: GeographyParams) -> GeographyPageContext:
-    df = population_settlements()
-    first_year, last_year = year_bounds(df)
-    return GeographyPageContext(
-        df=df, first_year=first_year, last_year=last_year, params=params
-    )
+def build_geography_context(
+    app: AppData, concentration_n: int
+) -> GeographyPageContext:
+    return GeographyPageContext(app=app, concentration_n=concentration_n)
 
 
 @dataclass
