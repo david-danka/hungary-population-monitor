@@ -1,4 +1,3 @@
-# streamlit_app/pages/winners_losers.py
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
@@ -8,8 +7,6 @@ from shared import get_app_data, warm_cached_properties
 from hpm.ui.context import build_change_context, ChangePageContext
 
 # Editorial constants, not exposed to users
-DEFAULT_MIN_BASELINE_POP = 200
-DEFAULT_N_LEADERBOARD = 15
 N_DECLINE_CONTRIBUTION = 50
 
 
@@ -46,51 +43,17 @@ def render_decline_contribution(ctx: ChangePageContext):
         f"📌 The **{N_DECLINE_CONTRIBUTION} settlements** with the steepest population losses "
         f"account for **{pct:.1f}%** of all population lost across every "
         f"shrinking settlement in the dataset."
-        f"{ctx.direction_counts}"
     )
 
 
-def render_growth_decline_summary_0(ctx):
+def render_growth_decline_count(ctx):
     counts = ctx.direction_counts
     c1, c2 = st.columns(2)
     c1.metric("📈 Settlements grew", counts["Growth"])
     c2.metric("📉 Settlements declined", counts["Decline"])
-
-    yearly = ctx.yearly_totals
-    fig = go.Figure()
-    fig.add_bar(
-        x=yearly["year"],
-        y=yearly["total_growth"],
-        name="Growth",
-        marker_color="#2ca02c",
-    )
-    fig.add_bar(
-        x=yearly["year"],
-        y=yearly["total_decline"],
-        name="Decline",
-        marker_color="#d62728",
-    )
-    fig.add_scatter(
-        x=yearly["year"],
-        y=yearly["net"],
-        name="Net",
-        mode="lines+markers",
-        line_color="black",
-    )
-    fig.update_layout(
-        barmode="relative",
-        title="Growth, decline, and the net — by year",
-        height=400,
-    )
-    st.plotly_chart(fig, width="stretch")
 
 
 def render_growth_decline_summary(ctx):
-    counts = ctx.direction_counts
-    c1, c2 = st.columns(2)
-    c1.metric("📈 Settlements grew", counts["Growth"])
-    c2.metric("📉 Settlements declined", counts["Decline"])
-
     totals = ctx.total_change_by_direction
     fig = go.Figure(
         go.Waterfall(
@@ -113,6 +76,36 @@ def render_growth_decline_summary(ctx):
         f"on Overview ({ctx.app.first_year}→{ctx.app.last_year} settlement-level sum); "
         "small differences can arise from settlements appearing/merging between years."
     )
+
+
+def render_growth_decline_by_year(ctx):
+    yearly = ctx.yearly_totals
+    fig = go.Figure()
+    fig.add_bar(
+        x=yearly["year"],
+        y=yearly["total_growth"],
+        name="Growth",
+        marker_color="#2ca02c",
+    )
+    fig.add_bar(
+        x=yearly["year"],
+        y=yearly["total_decline"],
+        name="Decline",
+        marker_color="#d62728",
+    )
+    fig.add_scatter(
+        x=yearly["year"],
+        y=yearly["net"],
+        name="Net",
+        mode="lines+markers",
+        line_color="#1f77b4",
+    )
+    fig.update_layout(
+        barmode="relative",
+        title="Growth, decline, and the net — by year",
+        height=400,
+    )
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_leaderboard(ctx: ChangePageContext):
@@ -149,7 +142,7 @@ def render_leaderboard(ctx: ChangePageContext):
         st.dataframe(gainers, hide_index=True, width="stretch")
 
 
-def render_map_2(ctx: ChangePageContext):
+def render_map(ctx: ChangePageContext):
     st.subheader("Map: performance relative to the national trend")
     st.caption(
         f"National change over this period: {ctx.national_pct_change:.1f}%. "
@@ -179,49 +172,6 @@ def render_map_2(ctx: ChangePageContext):
     st.plotly_chart(fig, width="stretch", theme="streamlit")
 
 
-def render_map(ctx: ChangePageContext):
-    change = ctx.change
-    metric = st.radio(
-        "Rank by",
-        ["Absolute change", "Percent change"],
-        horizontal=True,
-        key=1,
-    )
-    change_type = "abs_change" if metric == "Absolute change" else "pct_change"
-    lo, hi = (
-        int(change["population_first"].min()),
-        int(change["population_first"].max()),
-    )
-    pop_range = st.slider(
-        "Population range (baseline year)",
-        lo,
-        hi,
-        (lo, hi),
-        help="Narrow this to exclude a few huge cities that otherwise dominate the map's scale.",
-    )
-    view = change[change["population_first"].between(*pop_range)]
-
-    fig = px.scatter_map(
-        view,
-        lat="latitude",
-        lon="longitude",
-        size=np.sqrt(view["population_last"]),
-        size_max=30,
-        color=change_type,
-        color_continuous_scale="RdYlGn",
-        color_continuous_midpoint=0,
-        hover_name="settlement_name",
-        hover_data={"pct_change": ":.1f", "abs_change": ":,.0f"},
-        zoom=6,
-        height=650,
-        title=f"Population change by settlement, {ctx.app.first_year} → {ctx.app.last_year}",
-    )
-    fig.update_layout(
-        map_style="carto-positron", margin={"r": 0, "t": 40, "l": 0, "b": 0}
-    )
-    st.plotly_chart(fig, width="stretch", theme="streamlit")
-
-
 def main():
     st.set_page_config(page_title="Winners & Losers", layout="wide")
 
@@ -232,13 +182,13 @@ def main():
     render_thesis()
     render_decline_contribution(ctx)
     st.divider()
+    render_growth_decline_count(ctx)
     render_growth_decline_summary(ctx)
-    render_growth_decline_summary_0(ctx)
+    render_growth_decline_by_year(ctx)
     st.divider()
     render_leaderboard(ctx)
     st.divider()
     render_map(ctx)
-    render_map_2(ctx)
 
 
 main()
