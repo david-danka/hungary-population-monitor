@@ -4,15 +4,25 @@ from collections.abc import Callable
 import plotly.express as px
 import streamlit as st
 
-from hpm.ui.context import load_overview_context, OverviewPageContext
-from hpm.ui.selectors import read_overview_params, OverviewParams
+from shared import get_app_data, warm_cached_properties
+from hpm.ui.context import build_overview_context, OverviewPageContext
 
-CONCENTRATION_N = 50  # display constant, not a user-tunable param
+# Editorial constants
+CONCENTRATION_N = 50
+TOP_BOTTOM_N = 10
+
 
 
 @st.cache_data()
-def get_context(params: OverviewParams) -> OverviewPageContext:
-    return load_overview_context(params)
+def get_context() -> OverviewPageContext:
+    app = get_app_data()
+    ctx = build_overview_context(
+        app=app,
+        top_n_settlements=CONCENTRATION_N,
+        top_bottom_n=TOP_BOTTOM_N
+    )
+    warm_cached_properties(ctx)
+    return ctx
 
 
 def render_thesis():
@@ -29,11 +39,11 @@ def render_headline_metrics(ctx: OverviewPageContext) -> None:
     col1, col2, col3 = st.columns(3)
 
     col1.metric(
-        label=f"Population ({ctx.last_year})",
+        label=f"Population ({ctx.app.last_year})",
         value=m.latest, delta=m.change, format="%,.0f",
     )
     col2.metric(
-        label=f"Change since {ctx.first_year}",
+        label=f"Change since {ctx.app.first_year}",
         value=m.change_pct, delta=m.cagr,
         format="%.2f%%", delta_description="yearly CAGR",
     )
@@ -44,10 +54,10 @@ def render_headline_metrics(ctx: OverviewPageContext) -> None:
 
 
 def render_concentration_teaser(ctx: OverviewPageContext) -> None:
-    share = ctx.concentration_share(CONCENTRATION_N)
+    share = ctx.concentration_share
     st.info(
         f"📌 The **{CONCENTRATION_N} largest settlements** ({CONCENTRATION_N / ctx.metrics.n_settlements * 100:.2f}%) hold "
-        f"**{share:.1f}%** of the national population, as of {ctx.last_year}. "
+        f"**{share:.1f}%** of the national population, as of {ctx.app.last_year}. "
         "See the *Geography* page for how this concentration is shifting over time."
     )
 
@@ -56,7 +66,7 @@ def render_decline_yardstick(ctx: OverviewPageContext) -> None:
     row = ctx.decline_yardstick
     verb = "lost" if ctx.metrics.change < 0 else "gained"
     st.info(
-        f"🏘️ In {ctx.last_year - 1} alone, Hungary {verb} the equivalent of "
+        f"🏘️ In {ctx.app.last_year - 1} alone, Hungary {verb} the equivalent of "
         f"**{row['settlement_name']}** (pop. {row['population']:,.0f})"
     )
 
@@ -82,7 +92,7 @@ def render_map(ctx: OverviewPageContext):
         color="settlement_type", hover_name="settlement_name",
         hover_data={"population": True, "settlement_type": True},
         zoom=6, height=650,
-        title=f"Settlements by population, {ctx.last_year}",
+        title=f"Settlements by population, {ctx.app.last_year}",
     )
     fig.update_layout(map_style="carto-positron", margin={"r": 0, "t": 40, "l": 0, "b": 0})
     st.plotly_chart(fig, width="stretch", theme="streamlit")
@@ -97,8 +107,7 @@ def render_section(title, fn: Callable[[OverviewPageContext], None], ctx):
 def main():
     st.set_page_config(page_title="The Shrinking Whole", layout="wide")
 
-    params = read_overview_params()
-    ctx = get_context(params)
+    ctx = get_context()
 
     render_thesis()
     render_headline_metrics(ctx)

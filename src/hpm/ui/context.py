@@ -31,9 +31,8 @@ from hpm.analysis.change import (
     total_change_by_direction,
     relative_change_category,
     yearly_change_totals,
-    
 )
-from hpm.ui.selectors import OverviewParams, GeographyParams
+from hpm.ui.selectors import GeographyParams
 
 
 @dataclass(frozen=True)
@@ -66,57 +65,63 @@ class HeadlineMetrics:
 
 @dataclass
 class OverviewPageContext:
-    df: pd.DataFrame
-    first_year: int
-    last_year: int
+    app: AppData
     metrics: HeadlineMetrics
-    params: OverviewParams
+    top_bottom_n: int
+    top_n_settlements: int
 
     @cached_property
     def national_trend(self):
-        return national_population_by_year(self.df)
+        return national_population_by_year(self.app.df)
 
     @cached_property
     def settlements(self):
-        return settlements_by_year(self.df, self.last_year)
+        return settlements_by_year(self.app.df, self.app.last_year)
 
     @cached_property
     def settlement_type_mix(self):
-        return settlement_type_mix_by_year(self.df, self.last_year)
+        return settlement_type_mix_by_year(self.app.df, self.app.last_year)
 
     @cached_property
     def settlement_rank(self):
-        return settlement_rank_size_by_year(self.df, self.last_year)
+        return settlement_rank_size_by_year(self.app.df, self.app.last_year)
 
     @cached_property
     def largest_settlements(self):
         return largest_settlements_by_year(
-            self.df, self.last_year, self.params.top_n_settlements
+            self.app.df, self.app.last_year, self.top_n_settlements
         )
 
     @cached_property
     def change_extremes(self) -> PopulationChangeExtremes:
         return population_change_extremes(
-            self.df, self.first_year, self.last_year, self.params.top_bottom_n
+            self.app.df,
+            self.app.first_year,
+            self.app.last_year,
+            self.top_bottom_n,
         )
 
-    def concentration_share(self, n: int) -> float:
-        return concentration_share_by_year(self.df, self.last_year, n)
+    @cached_property
+    def concentration_share(self) -> float:
+        return concentration_share_by_year(
+            self.app.df,
+            self.app.last_year,
+            self.top_n_settlements,
+        )
 
     @cached_property
     def decline_yardstick(self) -> pd.Series:
         return closest_settlement_by_population(
-            self.df, self.last_year, abs(self.metrics.change)
+            self.app.df, self.app.last_year, abs(self.metrics.change)
         )
 
 
-def load_overview_context(params: OverviewParams) -> OverviewPageContext:
-    df = population_settlements()
-    first_year, last_year = year_bounds(df)
-
-    latest = national_population_at(df, last_year)
-    previous = national_population_at(df, last_year - 1)
-    first = national_population_at(df, first_year)
+def build_overview_context(
+    app: AppData, top_n_settlements: int, top_bottom_n: int
+) -> OverviewPageContext:
+    latest = national_population_at(app.df, app.last_year)
+    previous = national_population_at(app.df, app.last_year - 1)
+    first = national_population_at(app.df, app.first_year)
 
     metrics = HeadlineMetrics(
         latest=latest,
@@ -125,17 +130,16 @@ def load_overview_context(params: OverviewParams) -> OverviewPageContext:
         change=latest - previous,
         change_pct=percent_change(first, latest),
         cagr=compound_annual_growth_rate(
-            first, latest, last_year - first_year
+            first, latest, app.last_year - app.first_year
         ),
-        n_settlements=settlement_count(df),
+        n_settlements=settlement_count(app.df),
     )
 
     return OverviewPageContext(
-        df=df,
-        first_year=first_year,
-        last_year=last_year,
+        app=app,
         metrics=metrics,
-        params=params,
+        top_n_settlements=top_n_settlements,
+        top_bottom_n=top_bottom_n,
     )
 
 
