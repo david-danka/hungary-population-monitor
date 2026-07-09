@@ -23,6 +23,7 @@ from hpm.analysis.geography import (
     county_population_change,
     concentration_share_trend,
     largest_settlement_share_by_county,
+    county_population_trend,
 )
 from hpm.analysis.change import (
     settlement_change,
@@ -173,6 +174,10 @@ class GeographyPageContext:
         return largest_settlement_share_by_county(
             self.app.df, self.app.last_year
         )
+    
+    @cached_property
+    def county_population_trend(self) -> pd.DataFrame:
+        return county_population_trend(self.app.df)
 
 
 def build_geography_context(

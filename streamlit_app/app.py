@@ -8,7 +8,6 @@ pg = st.navigation([
     st.Page("pages/geography.py", title="Geography", icon=":material/thumb_up:",),
     st.Page("pages/winners_losers.py", title="Winners & Losers", icon=":material/thumb_up:",),
     st.Page("pages/map.py", title="Map", icon=":material/map:"),
-    st.Page("pages/trends.py", title="Trends", icon=":material/trending_up:"),
     st.Page("pages/insights.py", title="Insights", icon=":material/location_city:"),
     st.Page("pages/explorer.py", title="Explorer", icon=":material/search_insights:"),
     st.Page("pages/fun_facts.py", title="Fun Facts", icon=":material/lightbulb:"),

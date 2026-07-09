@@ -64,3 +64,7 @@ def largest_settlement_share_by_county(df: pd.DataFrame, year: int) -> pd.DataFr
     largest = largest.merge(county_totals.rename("county_total"), on="county_name")
     largest["share"] = largest["largest_settlement_pop"] / largest["county_total"] * 100
     return largest.sort_values("share", ascending=False)
+
+def county_population_trend(df: pd.DataFrame) -> pd.DataFrame:
+    """County-level population trajectory across all years."""
+    return df.groupby(["county_name", "year"], as_index=False)["population"].sum()
