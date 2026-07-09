@@ -32,6 +32,13 @@ from hpm.analysis.change import (
     relative_change_category,
     yearly_change_totals,
 )
+from hpm.analysis.settlements import (
+    settlement_options,
+    settlement_series,
+    settlement_summary,
+    gender_ratio_series,
+    SettlementSummary,
+)
 
 
 @dataclass(frozen=True)
@@ -224,3 +231,34 @@ def build_change_context(
     app: AppData, n_largest_losers: int
 ) -> ChangePageContext:
     return ChangePageContext(app=app, n_largest_losers=n_largest_losers)
+
+
+@dataclass
+class ExplorerPageContext:
+    """No params — settlement_name is a per-call argument, not baked into
+    context, since it changes on every selectbox interaction and there's
+    nothing expensive to protect by caching per-settlement."""
+
+    app: AppData
+
+    @cached_property
+    def options(self) -> pd.DataFrame:
+        return settlement_options(self.app.df)
+
+    def series(self, settlement_name: str) -> pd.DataFrame:
+        return settlement_series(self.app.df, settlement_name)
+
+    def summary(self, settlement_name: str) -> SettlementSummary:
+        return settlement_summary(
+            self.app.df,
+            settlement_name,
+            self.app.first_year,
+            self.app.last_year,
+        )
+    
+    def gender_ratio(self, settlement_name: str) -> pd.DataFrame:
+        return gender_ratio_series(self.app.df, settlement_name)
+
+
+def build_explorer_context(app: AppData) -> ExplorerPageContext:
+    return ExplorerPageContext(app=app)
