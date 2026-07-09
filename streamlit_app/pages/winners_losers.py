@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from shared import get_app_data
+from shared import get_app_data, warm_cached_properties
 from hpm.ui.context import build_change_context, ChangePageContext
 
 # Editorial constants, not exposed to users
@@ -23,7 +23,9 @@ RELATIVE_CATEGORY_COLORS = {
 @st.cache_data()
 def get_context() -> ChangePageContext:
     app = get_app_data()
-    return build_change_context(app=app, n_largest_losers=N_DECLINE_CONTRIBUTION)
+    ctx = build_change_context(app=app, n_largest_losers=N_DECLINE_CONTRIBUTION)
+    warm_cached_properties(ctx)
+    return ctx
 
 
 def render_thesis():
