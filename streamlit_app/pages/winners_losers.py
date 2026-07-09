@@ -5,7 +5,6 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from hpm.ui.context import load_change_context, ChangePageContext
-from hpm.ui.selectors import read_change_params, ChangeParams
 
 
 # Editorial constants, not exposed to users
@@ -22,8 +21,8 @@ RELATIVE_CATEGORY_COLORS = {
 
 
 @st.cache_data()
-def get_context(params: ChangeParams) -> ChangePageContext:
-    return load_change_context(params)
+def get_context() -> ChangePageContext:
+    return load_change_context()
 
 
 def render_thesis():
@@ -220,12 +219,7 @@ def render_map(ctx: ChangePageContext):
 def main():
     st.set_page_config(page_title="Winners & Losers", layout="wide")
 
-    params = read_change_params(
-        default_min_baseline_pop=DEFAULT_MIN_BASELINE_POP,
-        default_n_leaderboard=DEFAULT_N_LEADERBOARD,
-        n_decline_contribution=N_DECLINE_CONTRIBUTION,
-    )
-    ctx = get_context(params)
+    ctx = get_context()
 
     render_thesis()
     render_decline_contribution(ctx)

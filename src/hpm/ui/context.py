@@ -33,7 +33,7 @@ from hpm.analysis.change import (
     yearly_change_totals,
     
 )
-from hpm.ui.selectors import OverviewParams, GeographyParams, ChangeParams
+from hpm.ui.selectors import OverviewParams, GeographyParams
 
 
 @dataclass(frozen=True)
@@ -157,15 +157,17 @@ def load_geography_context(params: GeographyParams) -> GeographyPageContext:
 
 @dataclass
 class ChangePageContext:
+    """No params — every property here is the full, unfiltered answer.
+    Widgets that slice/filter (min_baseline_pop, row counts, ranking metric,
+    population range) live in page.py as local st.* calls over these."""
     df: pd.DataFrame
     first_year: int
     last_year: int
-    params: ChangeParams
 
     @cached_property
     def change(self) -> pd.DataFrame:
         return settlement_change(
-            self.df, self.first_year, self.last_year, self.params.min_baseline_pop
+            self.df, self.first_year, self.last_year,
         )
     
     @cached_property
@@ -194,7 +196,7 @@ class ChangePageContext:
         return national_decline_contribution(self.change, n)
 
 
-def load_change_context(params: ChangeParams) -> ChangePageContext:
+def load_change_context() -> ChangePageContext:
     df = population_settlements()
     first_year, last_year = year_bounds(df)
-    return ChangePageContext(df=df, first_year=first_year, last_year=last_year, params=params)
+    return ChangePageContext(df=df, first_year=first_year, last_year=last_year)
