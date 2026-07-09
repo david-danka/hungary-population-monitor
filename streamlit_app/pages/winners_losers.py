@@ -21,9 +21,12 @@ RELATIVE_CATEGORY_COLORS = {
 
 
 @st.cache_data()
-def get_context() -> ChangePageContext:
+def get_context(n_decline_contribution: int) -> ChangePageContext:
     app = get_app_data()
-    ctx = build_change_context(app=app, n_largest_losers=N_DECLINE_CONTRIBUTION)
+    ctx = build_change_context(
+        app=app,
+        n_largest_losers=n_decline_contribution,
+    )
     warm_cached_properties(ctx)
     return ctx
 
@@ -222,7 +225,9 @@ def render_map(ctx: ChangePageContext):
 def main():
     st.set_page_config(page_title="Winners & Losers", layout="wide")
 
-    ctx = get_context()
+    ctx = get_context(
+        n_decline_contribution=N_DECLINE_CONTRIBUTION,
+    )
 
     render_thesis()
     render_decline_contribution(ctx)
