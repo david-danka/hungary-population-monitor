@@ -1,3 +1,5 @@
+"""Helpers for deriving settlement-level summaries and selection metadata."""
+
 from __future__ import annotations
 from dataclasses import dataclass
 import pandas as pd
@@ -5,6 +7,8 @@ import pandas as pd
 
 @dataclass(frozen=True)
 class SettlementSummary:
+    """Summary statistics for one settlement across the observed time span."""
+
     settlement_name: str
     county_name: str
     settlement_type: str
@@ -17,7 +21,14 @@ class SettlementSummary:
 
 
 def settlement_options(df: pd.DataFrame) -> pd.DataFrame:
-    """One row per settlement, with a disambiguated label for a selectbox."""
+    """Build a settlement selection table with disambiguated labels.
+
+    Args:
+        df: A DataFrame containing settlement-level population data.
+
+    Returns:
+        A DataFrame with one row per settlement and a display label.
+    """
     options = df[["settlement_name", "county_name"]].drop_duplicates()
     options["label"] = (
         options["settlement_name"]
@@ -29,12 +40,28 @@ def settlement_options(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def settlement_series(df: pd.DataFrame, settlement_name: str) -> pd.DataFrame:
-    """Full year-by-year male/female/total population series for one settlement."""
+    """Return the full yearly population series for one settlement.
+
+    Args:
+        df: A DataFrame containing settlement population rows.
+        settlement_name: The settlement whose history should be extracted.
+
+    Returns:
+        A DataFrame sorted by year for the requested settlement.
+    """
     return df[df["settlement_name"] == settlement_name].sort_values("year")
 
 
 def gender_ratio_series(df: pd.DataFrame, settlement_name: str) -> pd.DataFrame:
-    """Male-to-female population ratio for one settlement, year by year."""
+    """Return male-to-female ratios for a settlement across time.
+
+    Args:
+        df: A DataFrame containing settlement population rows.
+        settlement_name: The settlement whose ratio series should be built.
+
+    Returns:
+        A DataFrame with the original series plus a `ratio` column.
+    """
     series = settlement_series(df, settlement_name)
     return series.assign(ratio=series["male_population"] / series["female_population"])
 
@@ -42,7 +69,17 @@ def gender_ratio_series(df: pd.DataFrame, settlement_name: str) -> pd.DataFrame:
 def settlement_summary(
     df: pd.DataFrame, settlement_name: str, first_year: int, last_year: int
 ) -> SettlementSummary:
-    """At-a-glance stats for one settlement: where it stands and how it moved."""
+    """Build an at-a-glance summary for one settlement.
+
+    Args:
+        df: A DataFrame containing settlement population rows.
+        settlement_name: The settlement to summarize.
+        first_year: The earliest year to compare against.
+        last_year: The latest year to summarize.
+
+    Returns:
+        A structured summary object with population change and rank details.
+    """
     series = settlement_series(df, settlement_name)
     latest_row = series[series["year"] == last_year].iloc[0]
     first_row = series[series["year"] == first_year].iloc[0]

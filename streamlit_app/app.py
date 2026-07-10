@@ -1,3 +1,14 @@
+"""Application entry point.
+
+Initializes the Hungary Population Monitor Streamlit application,
+performs one-time bootstrap setup, configures the application's page
+navigation, and starts the selected page.
+
+The bootstrap step prepares shared application state before any page is
+executed, ensuring each page runs against the same initialized
+environment.
+"""
+
 import streamlit as st
 from hpm.bootstrap import prepare
 

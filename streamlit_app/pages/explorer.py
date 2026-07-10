@@ -1,3 +1,5 @@
+"""Streamlit page for exploring settlement-level population history."""
+
 import plotly.express as px
 import streamlit as st
 
@@ -7,13 +9,19 @@ from hpm.ui.context import build_explorer_context, ExplorerPageContext
 
 @st.cache_data()
 def get_context() -> ExplorerPageContext:
+    """Build the cached context object for the explorer page.
+
+    Returns:
+        A populated explorer-page context object.
+    """
     app = get_app_data()
     ctx = build_explorer_context(app)
     warm_cached_properties(ctx)
     return ctx
 
 
-def render_thesis():
+def render_thesis() -> None:
+    """Render the introductory copy for the explorer page."""
     st.title("🔎 Explorer")
     st.markdown(
         "Look up any settlement and see its own story against the national one."
@@ -21,12 +29,26 @@ def render_thesis():
 
 
 def render_selector(ctx: ExplorerPageContext) -> str:
+    """Render the settlement selector and return the chosen settlement name.
+
+    Args:
+        ctx: The explorer page context containing the available settlements.
+
+    Returns:
+        The selected settlement name.
+    """
     options = ctx.options
     choice = st.selectbox("Settlement", options["label"])
     return options.loc[options["label"] == choice, "settlement_name"].iloc[0]
 
 
-def render_summary(ctx: ExplorerPageContext, settlement_name: str):
+def render_summary(ctx: ExplorerPageContext, settlement_name: str) -> None:
+    """Render the summary metrics for a selected settlement.
+
+    Args:
+        ctx: The explorer page context.
+        settlement_name: The settlement to summarize.
+    """
     s = ctx.summary(settlement_name)
 
     st.subheader(f"{s.settlement_name} ({s.county_name})")
@@ -45,7 +67,13 @@ def render_summary(ctx: ExplorerPageContext, settlement_name: str):
     )
 
 
-def render_trend(ctx: ExplorerPageContext, settlement_name: str):
+def render_trend(ctx: ExplorerPageContext, settlement_name: str) -> None:
+    """Render the population trend chart for a single settlement.
+
+    Args:
+        ctx: The explorer page context.
+        settlement_name: The settlement to plot.
+    """
     series = ctx.series(settlement_name)
 
     long = series.melt(
@@ -74,8 +102,13 @@ def render_trend(ctx: ExplorerPageContext, settlement_name: str):
     st.plotly_chart(fig, width="stretch")
 
 
-# page.py — now purely rendering
-def render_gender_ratio(ctx: ExplorerPageContext, settlement_name: str):
+def render_gender_ratio(ctx: ExplorerPageContext, settlement_name: str) -> None:
+    """Render the male-to-female ratio chart for one settlement.
+
+    Args:
+        ctx: The explorer page context.
+        settlement_name: The settlement to plot.
+    """
     series = ctx.gender_ratio(settlement_name)
     fig = px.line(
         series, x="year", y="ratio", title="Male-to-female ratio over time"
@@ -89,7 +122,8 @@ def render_gender_ratio(ctx: ExplorerPageContext, settlement_name: str):
     st.plotly_chart(fig, width="stretch")
 
 
-def main():
+def main() -> None:
+    """Render the full explorer page."""
     st.set_page_config(page_title="Explorer", layout="wide")
     ctx = get_context()
 

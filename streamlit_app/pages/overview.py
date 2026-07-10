@@ -1,4 +1,5 @@
-# streamlit_app/pages/overview.py
+"""Streamlit page for the overview narrative of Hungary's population changes."""
+
 from collections.abc import Callable
 
 import plotly.express as px
@@ -17,17 +18,29 @@ def get_context(
     concentration_n: int,
     top_bottom_n: int,
 ) -> OverviewPageContext:
+    """Build the cached context object for the overview page.
+
+    Args:
+        concentration_n: Number of largest settlements to consider in the
+            concentration summary.
+        top_bottom_n: Number of settlements to highlight in the extreme
+            change view.
+
+    Returns:
+        A populated overview-page context object.
+    """
     app = get_app_data()
     ctx = build_overview_context(
         app=app,
         top_n_settlements=concentration_n,
-        top_bottom_n=top_bottom_n
+        top_bottom_n=top_bottom_n,
     )
     warm_cached_properties(ctx)
     return ctx
 
 
-def render_thesis():
+def render_thesis() -> None:
+    """Render the editorial introduction for the overview page."""
     st.title("🇭🇺 The Shrinking Whole")
     st.markdown(
         "Hungary's population has been declining for decades — and the "
@@ -37,25 +50,36 @@ def render_thesis():
 
 
 def render_headline_metrics(ctx: OverviewPageContext) -> None:
+    """Render the top-level KPI cards for the overview page.
+
+    Args:
+        ctx: The overview page context containing the headline metrics.
+    """
     m = ctx.metrics
     col1, col2, col3 = st.columns(3)
 
     col1.metric(
         label=f"Population ({ctx.app.last_year})",
-        value=m.latest, delta=m.change, format="%,.0f",
+        value=m.latest,
+        delta=m.change,
+        format="%,.0f",
     )
     col2.metric(
         label=f"Change since {ctx.app.first_year}",
-        value=m.change_pct, delta=m.cagr,
-        format="%.2f%%", delta_description="yearly CAGR",
+        value=m.change_pct,
+        delta=m.cagr,
+        format="%.2f%%",
+        delta_description="yearly CAGR",
     )
     col3.metric(
         label="Settlements tracked",
-        value=m.n_settlements, format="%,.0f",
+        value=m.n_settlements,
+        format="%,.0f",
     )
 
 
 def render_concentration_teaser(ctx: OverviewPageContext) -> None:
+    """Render an informational teaser about settlement concentration."""
     share = ctx.concentration_share
     st.info(
         f"📌 The **{CONCENTRATION_N} largest settlements** ({CONCENTRATION_N / ctx.metrics.n_settlements * 100:.2f}%) hold "
@@ -65,6 +89,7 @@ def render_concentration_teaser(ctx: OverviewPageContext) -> None:
 
 
 def render_decline_yardstick(ctx: OverviewPageContext) -> None:
+    """Render the benchmark settlement that illustrates the decline."""
     row = ctx.decline_yardstick
     verb = "lost" if ctx.metrics.change < 0 else "gained"
     st.info(
@@ -73,40 +98,67 @@ def render_decline_yardstick(ctx: OverviewPageContext) -> None:
     )
 
 
-def render_national_trend(ctx: OverviewPageContext):
+def render_national_trend(ctx: OverviewPageContext) -> None:
+    """Render the national population trend line chart."""
     st.plotly_chart(
-        px.line(ctx.national_trend, x="year", y="population",
-                title="National population over time"),
+        px.line(
+            ctx.national_trend,
+            x="year",
+            y="population",
+            title="National population over time",
+        ),
         width="stretch",
     )
 
 
-def render_map(ctx: OverviewPageContext):
+def render_map(ctx: OverviewPageContext) -> None:
+    """Render the interactive settlement map for the latest year."""
     import numpy as np
+
     settlements = ctx.settlements
     types = sorted(settlements["settlement_type"].unique())
     selected = st.multiselect("Settlement type", types, default=types)
     view = settlements[settlements["settlement_type"].isin(selected)]
 
     fig = px.scatter_map(
-        view, lat="latitude", lon="longitude",
-        size=np.sqrt(view["population"]), size_max=30,
-        color="settlement_type", hover_name="settlement_name",
+        view,
+        lat="latitude",
+        lon="longitude",
+        size=np.sqrt(view["population"]),
+        size_max=30,
+        color="settlement_type",
+        hover_name="settlement_name",
         hover_data={"population": True, "settlement_type": True},
-        zoom=6, height=650,
+        zoom=6,
+        height=650,
         title=f"Settlements by population, {ctx.app.last_year}",
     )
-    fig.update_layout(map_style="carto-positron", margin={"r": 0, "t": 40, "l": 0, "b": 0})
+    fig.update_layout(
+        map_style="carto-positron",
+        margin={"r": 0, "t": 40, "l": 0, "b": 0},
+    )
     st.plotly_chart(fig, width="stretch", theme="streamlit")
 
 
-def render_section(title, fn: Callable[[OverviewPageContext], None], ctx):
+def render_section(
+    title: str,
+    fn: Callable[[OverviewPageContext], None],
+    ctx: OverviewPageContext,
+) -> None:
+    """Render a titled section with a shared divider.
+
+    Args:
+        title: The section heading displayed to the user.
+        fn: The renderer function for the section body.
+        ctx: The context object supplied to the renderer.
+    """
     st.subheader(title)
     fn(ctx)
     st.divider()
 
 
-def main():
+def main() -> None:
+    """Render the full overview page."""
     st.set_page_config(page_title="The Shrinking Whole", layout="wide")
 
     ctx = get_context(

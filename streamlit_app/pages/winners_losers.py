@@ -1,3 +1,5 @@
+"""Streamlit page for highlighting settlements that gained or lost population."""
+
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
@@ -19,6 +21,15 @@ RELATIVE_CATEGORY_COLORS = {
 
 @st.cache_data()
 def get_context(n_decline_contribution: int) -> ChangePageContext:
+    """Build the cached change-page context.
+
+    Args:
+        n_decline_contribution: Number of largest losers to use when estimating
+            their contribution to overall decline.
+
+    Returns:
+        A populated change-page context object.
+    """
     app = get_app_data()
     ctx = build_change_context(
         app=app,
@@ -28,7 +39,8 @@ def get_context(n_decline_contribution: int) -> ChangePageContext:
     return ctx
 
 
-def render_thesis():
+def render_thesis() -> None:
+    """Render the introductory copy for the winners-and-losers page."""
     st.title("📊 Winners & Losers")
     st.markdown(
         "The national decline isn't one uniform slide — it's concentrated "
@@ -37,7 +49,8 @@ def render_thesis():
     )
 
 
-def render_decline_contribution(ctx: ChangePageContext):
+def render_decline_contribution(ctx: ChangePageContext) -> None:
+    """Render the contribution of the biggest losers to overall decline."""
     pct = ctx.decline_contribution
     st.info(
         f"📌 The **{N_DECLINE_CONTRIBUTION} settlements** with the steepest population losses "
@@ -46,14 +59,16 @@ def render_decline_contribution(ctx: ChangePageContext):
     )
 
 
-def render_growth_decline_count(ctx):
+def render_growth_decline_count(ctx: ChangePageContext) -> None:
+    """Render the headline counts of growing and declining settlements."""
     counts = ctx.direction_counts
     c1, c2 = st.columns(2)
     c1.metric("📈 Settlements grew", counts["Growth"])
     c2.metric("📉 Settlements declined", counts["Decline"])
 
 
-def render_growth_decline_summary(ctx):
+def render_growth_decline_summary(ctx: ChangePageContext) -> None:
+    """Render the waterfall summary of growth, decline, and net change."""
     totals = ctx.total_change_by_direction
     fig = go.Figure(
         go.Waterfall(
@@ -78,7 +93,8 @@ def render_growth_decline_summary(ctx):
     )
 
 
-def render_growth_decline_by_year(ctx):
+def render_growth_decline_by_year(ctx: ChangePageContext) -> None:
+    """Render the year-by-year chart of growth, decline, and net change."""
     yearly = ctx.yearly_totals
     fig = go.Figure()
     fig.add_bar(
@@ -108,7 +124,8 @@ def render_growth_decline_by_year(ctx):
     st.plotly_chart(fig, width="stretch")
 
 
-def render_leaderboard(ctx: ChangePageContext):
+def render_leaderboard(ctx: ChangePageContext) -> None:
+    """Render the leaderboard of biggest gainers and losers."""
     st.subheader("Leaderboard")
     min_baseline_pop = st.slider(
         "Minimum baseline population",
@@ -142,7 +159,8 @@ def render_leaderboard(ctx: ChangePageContext):
         st.dataframe(gainers, hide_index=True, width="stretch")
 
 
-def render_map(ctx: ChangePageContext):
+def render_map(ctx: ChangePageContext) -> None:
+    """Render the settlement map colored by relative performance."""
     st.subheader("Map: performance relative to the national trend")
     st.caption(
         f"National change over this period: {ctx.national_pct_change:.1f}%. "
@@ -172,7 +190,8 @@ def render_map(ctx: ChangePageContext):
     st.plotly_chart(fig, width="stretch", theme="streamlit")
 
 
-def main():
+def main() -> None:
+    """Render the full winners-and-losers page."""
     st.set_page_config(page_title="Winners & Losers", layout="wide")
 
     ctx = get_context(

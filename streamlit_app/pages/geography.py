@@ -1,4 +1,5 @@
-# streamlit_app/pages/geography.py
+"""Streamlit page for exploring the geography of population concentration."""
+
 import plotly.express as px
 import streamlit as st
 
@@ -11,6 +12,15 @@ CONCENTRATION_N = 10
 
 @st.cache_data()
 def get_context(concentration_n: int) -> GeographyPageContext:
+    """Build the cached geography-page context.
+
+    Args:
+        concentration_n: Number of largest settlements to include in the
+            concentration analysis.
+
+    Returns:
+        A populated geography-page context object.
+    """
     app = get_app_data()
     ctx = build_geography_context(
         app=app,
@@ -20,7 +30,8 @@ def get_context(concentration_n: int) -> GeographyPageContext:
     return ctx
 
 
-def render_thesis():
+def render_thesis() -> None:
+    """Render the introduction to the geography page."""
     st.title("🧭 Where It Concentrates")
     st.markdown(
         "The national decline hides a second story: population is pooling "
@@ -29,7 +40,8 @@ def render_thesis():
     )
 
 
-def render_choropleth(ctx: GeographyPageContext):
+def render_choropleth(ctx: GeographyPageContext) -> None:
+    """Render the county-level choropleth map of percentage change."""
     fig = px.choropleth_map(
         ctx.county_change,
         geojson=ctx.county_geojson,
@@ -47,7 +59,8 @@ def render_choropleth(ctx: GeographyPageContext):
     st.plotly_chart(fig, width="stretch")
 
 
-def render_concentration_trend(ctx: GeographyPageContext):
+def render_concentration_trend(ctx: GeographyPageContext) -> None:
+    """Render the concentration trend chart for the largest settlements."""
     st.subheader(
         f"Share of national population in the {CONCENTRATION_N} largest settlements"
     )
@@ -57,7 +70,8 @@ def render_concentration_trend(ctx: GeographyPageContext):
     )
 
 
-def render_dominance_table(ctx: GeographyPageContext):
+def render_dominance_table(ctx: GeographyPageContext) -> None:
+    """Render the county dominance bar chart for the largest settlement."""
     st.subheader(f"County seat dominance, {ctx.app.last_year}")
     st.caption(
         "How much of each county's population lives in its single largest settlement."
@@ -74,7 +88,8 @@ def render_dominance_table(ctx: GeographyPageContext):
     st.plotly_chart(fig, width="stretch")
 
 
-def render_county_trends(ctx: GeographyPageContext):
+def render_county_trends(ctx: GeographyPageContext) -> None:
+    """Render the county population trend chart, optionally indexed."""
     st.subheader("County population over time")
     indexed = st.checkbox("Index to first year = 100", value=True)
     if indexed:
@@ -90,7 +105,8 @@ def render_county_trends(ctx: GeographyPageContext):
     )
 
 
-def render_lorenz(ctx: GeographyPageContext):
+def render_lorenz(ctx: GeographyPageContext) -> None:
+    """Render the Lorenz curve for settlement population inequality."""
     st.subheader(
         f"Lorenz curve: settlement population inequality, {ctx.app.last_year}"
     )
@@ -110,7 +126,8 @@ def render_lorenz(ctx: GeographyPageContext):
     st.plotly_chart(fig, width="stretch")
 
 
-def render_gini_trend(ctx: GeographyPageContext):
+def render_gini_trend(ctx: GeographyPageContext) -> None:
+    """Render the Gini trend chart and its latest summary caption."""
     st.subheader("Settlement inequality over time (Gini coefficient)")
     fig = px.line(ctx.gini_trend, x="year", y="gini")
     fig.update_layout(yaxis_range=[0, 1], yaxis_title="Gini coefficient")
@@ -122,7 +139,8 @@ def render_gini_trend(ctx: GeographyPageContext):
     )
 
 
-def main():
+def main() -> None:
+    """Render the full geography page."""
     st.set_page_config(
         page_title="Geography — Hungary Population", layout="wide"
     )

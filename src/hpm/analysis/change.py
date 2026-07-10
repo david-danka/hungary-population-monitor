@@ -1,4 +1,10 @@
-# analysis/change.py — new module
+"""Per-settlement population change analysis for the Winners & Losers page.
+
+Computes population change between two years at the individual settlement
+level -- absolute and percentage framings, direction classification,
+national-decline attribution, and year-by-year growth/decline totals.
+Pure pandas/numpy; no UI or database dependencies.
+"""
 from __future__ import annotations
 import numpy as np
 import pandas as pd
@@ -10,9 +16,30 @@ def settlement_change(
     last_year: int,
     min_baseline_pop: int = 0,
 ) -> pd.DataFrame:
-    """
-    Per-settlement population change between two years, with both absolute
-    and percentage framings. No ranking/truncation — callers slice as needed.
+    """Computes per-settlement population change between two years.
+
+    Merges each settlement's population in `first_year` and `last_year`,
+    then derives absolute change, percentage change, and a coarse growth/
+    decline direction label. Performs no ranking or truncation -- callers
+    slice the result (e.g. via `nlargest`/`nsmallest`) as needed.
+
+    Args:
+        df: Wide settlement-population table with at least the columns
+            `settlement_name`, `settlement_type`, `county_name`,
+            `latitude`, `longitude`, `population`, and `year`.
+        first_year: Baseline year to measure change from.
+        last_year: End year to measure change to.
+        min_baseline_pop: Minimum population in `first_year` a settlement
+            must have to be included. Excludes settlements where a tiny
+            absolute swing produces a misleadingly large percentage change
+            (e.g. a village growing from 4 to 12 people). Defaults to 0
+            (no filtering).
+
+    Returns:
+        One row per settlement present in both years, with columns:
+        `settlement_name`, `settlement_type`, `county_name`, `latitude`,
+        `longitude`, `population_first`, `population_last`, `abs_change`,
+        `pct_change`, and `direction` (`"Growth"` or `"Decline"`).
     """
     cols = [
         "settlement_name",
@@ -43,9 +70,17 @@ def settlement_change(
 
 
 def national_decline_contribution(change_df: pd.DataFrame, n: int) -> float:
-    """
-    % of the *total national population lost* (summed over all declining
-    settlements) that the N biggest individual losers account for.
+    """Computes the share of total population loss driven by the N biggest losers.
+
+    Args:
+        change_df: Output of `settlement_change`. Must contain `abs_change`.
+        n: Number of the steepest-declining settlements to attribute.
+
+    Returns:
+        Percentage (0-100) of the total population lost across every
+        declining settlement that is accounted for by the N settlements
+        with the largest individual losses. Returns 0.0 if no settlement
+        in `change_df` declined.
     """
     losses = change_df[change_df["abs_change"] < 0]
     total_loss = losses["abs_change"].sum()
@@ -58,16 +93,15 @@ def national_decline_contribution(change_df: pd.DataFrame, n: int) -> float:
 def count_by_direction(
     change_df: pd.DataFrame,
 ) -> dict[str, int]:
-    """
-    Count the number of decliner and grower settlements
+    """Counts settlements by growth/decline direction.
 
     Args:
-        df (pd.DataFrame): output of `population_settlements` function
-        base_year (int): year to measure the change against
-        end_year (int): year to measure the change to
+        change_df: Output of `settlement_change`. Must contain `direction`.
 
     Returns:
-        dict[str, int]: count grower and decliner settlements
+        Dict with keys `"Growth"` and `"Decline"`, each mapped to the
+        number of settlements with that direction. A direction absent
+        from `change_df` maps to 0.
     """
     counts = change_df["direction"].value_counts()
     return {
@@ -77,7 +111,17 @@ def count_by_direction(
 
 
 def total_change_by_direction(change_df: pd.DataFrame) -> pd.DataFrame:
-    """Total population gained, total lost, and the net — for a waterfall chart."""
+    """Computes total population gained, lost, and the net, for a waterfall chart.
+
+    Args:
+        change_df: Output of `settlement_change`. Must contain `abs_change`.
+
+    Returns:
+        Three-row DataFrame with columns `label`, `value`, and `measure`
+        (Plotly waterfall convention: `"relative"` for the growth/decline
+        bars, `"total"` for the net-change bar), in the order Total
+        growth, Total decline, Net change.
+    """
     total_growth = change_df.loc[change_df["abs_change"] > 0, "abs_change"].sum()
     total_decline = change_df.loc[change_df["abs_change"] < 0, "abs_change"].sum()
     return pd.DataFrame({
@@ -88,8 +132,25 @@ def total_change_by_direction(change_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def relative_change_category(change_df: pd.DataFrame, national_pct_change: float) -> pd.DataFrame:
-    """Classifies each settlement against the national pct change, not zero:
-    Growing / Declining slower than national / Declining faster than national."""
+    """Classifies each settlement's change relative to the national trend.
+
+    Unlike a simple positive/negative split, this compares each
+    settlement's percentage change against the national percentage
+    change over the same period -- so a settlement losing population
+    slower than the national average is distinguished from one losing
+    population faster.
+
+    Args:
+        change_df: Output of `settlement_change`. Must contain `pct_change`.
+        national_pct_change: The national population percentage change
+            over the same period, as a point of comparison.
+
+    Returns:
+        Copy of `change_df` with an added `relative_category` column,
+        one of: `"Growing"` (pct_change >= 0), `"Declining slower than
+        national average"` (pct_change < 0 but >= national_pct_change),
+        or `"Declining faster than national average"` (otherwise).
+    """
     change_df = change_df.copy()
     conditions = [
         change_df["pct_change"] >= 0,
@@ -103,7 +164,23 @@ def relative_change_category(change_df: pd.DataFrame, national_pct_change: float
 
 
 def yearly_change_totals(df: pd.DataFrame) -> pd.DataFrame:
-    """Per-year totals of settlement-level YoY growth and decline, plus net."""
+    """Computes per-year totals of settlement-level year-over-year change.
+
+    For each settlement, computes the year-over-year population delta,
+    then sums separately across all growing and all declining settlements
+    for each year -- showing how the composition of national change
+    (not just its net value) evolves over time.
+
+    Args:
+        df: Wide settlement-population table with at least `settlement_name`,
+            `year`, and `population`.
+
+    Returns:
+        One row per year (excluding each settlement's first recorded
+        year, which has no prior value to diff against), with columns
+        `year`, `total_growth` (sum of positive YoY deltas), `total_decline`
+        (sum of negative YoY deltas), and `net` (their sum).
+    """
     sorted_df = df.sort_values(["settlement_name", "year"]).copy()
     sorted_df["yoy_change"] = sorted_df.groupby("settlement_name")["population"].diff()
     sorted_df = sorted_df.dropna(subset=["yoy_change"])

@@ -1,3 +1,5 @@
+"""Streamlit page for presenting notable facts and historical changes."""
+
 from shared import get_app_data, warm_cached_properties
 from hpm.analysis.facts import group_type_changes
 from hpm.ui.context import build_facts_context, FactsPageContext
@@ -9,6 +11,15 @@ MIN_POP_FOR_GENDER_RATIO = 0
 
 @st.cache_data()
 def get_context(min_pop_for_gender_ratio: int) -> FactsPageContext:
+    """Build the cached context object for the fun-facts page.
+
+    Args:
+        min_pop_for_gender_ratio: Minimum population cutoff for highlighting
+            gender-imbalance cases.
+
+    Returns:
+        A populated facts-page context object.
+    """
     app = get_app_data()
     ctx = build_facts_context(
         app=app, min_pop_for_gender_ratio=min_pop_for_gender_ratio
@@ -17,7 +28,8 @@ def get_context(min_pop_for_gender_ratio: int) -> FactsPageContext:
     return ctx
 
 
-def render_summary_metrics(ctx: FactsPageContext):
+def render_summary_metrics(ctx: FactsPageContext) -> None:
+    """Render the top summary KPI cards for the facts page."""
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("🆕 New settlements", len(ctx.appeared))
     c2.metric("🏛 County changes", len(ctx.county_changes))
@@ -26,7 +38,8 @@ def render_summary_metrics(ctx: FactsPageContext):
     st.divider()
 
 
-def render_new_settlement_card(ctx: FactsPageContext):
+def render_new_settlement_card(ctx: FactsPageContext) -> None:
+    """Render the card highlighting the newest settlement event."""
     newest = ctx.newest_settlement
     if newest is None:
         return
@@ -37,7 +50,8 @@ def render_new_settlement_card(ctx: FactsPageContext):
         st.caption(f"Became independent in **{year}**.")
 
 
-def render_county_change_card(ctx: FactsPageContext):
+def render_county_change_card(ctx: FactsPageContext) -> None:
+    """Render the card for the most recent county reassignment."""
     row = ctx.latest_county_change
     if row is None:
         return
@@ -48,8 +62,8 @@ def render_county_change_card(ctx: FactsPageContext):
         )
 
 
-# page.py
-def render_gender_ratio_card(ctx: FactsPageContext):
+def render_gender_ratio_card(ctx: FactsPageContext) -> None:
+    """Render the gender-imbalance highlight cards."""
     with st.container(border=True):
         st.markdown("### 👥 Largest gender imbalances")
         col1, col2 = st.columns(2)
@@ -77,7 +91,8 @@ def render_gender_ratio_card(ctx: FactsPageContext):
             )
 
 
-def render_smallest_settlement_card(ctx: FactsPageContext):
+def render_smallest_settlement_card(ctx: FactsPageContext) -> None:
+    """Render the card for the smallest settlement in the earliest and latest years."""
     with st.container(border=True):
         st.markdown("### 📉 Smallest settlement")
         c1, c2 = st.columns(2)
@@ -95,7 +110,8 @@ def render_smallest_settlement_card(ctx: FactsPageContext):
         )
 
 
-def render_highlights(ctx: FactsPageContext):
+def render_highlights(ctx: FactsPageContext) -> None:
+    """Render the highlight cards for the facts page."""
     st.subheader("⭐ Highlights")
     left, right = st.columns(2)
     with left:
@@ -107,7 +123,12 @@ def render_highlights(ctx: FactsPageContext):
     st.divider()
 
 
-def render_badges(names):
+def render_badges(names) -> None:
+    """Render a compact badge list for a collection of names.
+
+    Args:
+        names: The settlement names to display as badges.
+    """
     badge_html = "".join(
         f'<span style="display:inline-block;padding:4px 10px;margin:4px;'
         f'border-radius:999px;background:#efefef;font-size:0.9rem;">{name}</span>'
@@ -116,13 +137,20 @@ def render_badges(names):
     st.markdown(badge_html, unsafe_allow_html=True)
 
 
-def render_history(ctx: FactsPageContext):
+def render_history(ctx: FactsPageContext) -> None:
+    """Render the historical timeline of notable events."""
     st.subheader("📅 Years of Change")
     for year, data in ctx.history.items():
         render_history_year(year, data)
 
 
-def render_history_year(year, data):
+def render_history_year(year, data) -> None:
+    """Render the grouped history section for one year.
+
+    Args:
+        year: The year being shown.
+        data: The change events recorded for that year.
+    """
     total = len(data["new"]) + len(data["county"]) + len(data["types"])
     with st.container(border=True):
         st.markdown(f"## {year}")
@@ -133,7 +161,8 @@ def render_history_year(year, data):
             render_type_events(data["types"])
 
 
-def render_year_summary(total, data):
+def render_year_summary(total: int, data) -> None:
+    """Render a compact summary of event counts for one year."""
     st.caption(
         "1 recorded change" if total == 1 else f"{total} recorded changes"
     )
@@ -149,7 +178,8 @@ def render_year_summary(total, data):
         st.caption("Minor update")
 
 
-def render_new_events(events):
+def render_new_events(events) -> None:
+    """Render the list of newly independent settlements for a year."""
     if not events:
         return
     st.markdown("### 🆕 New settlements")
@@ -157,7 +187,8 @@ def render_new_events(events):
         st.markdown(f"- **{settlement}** became independent")
 
 
-def render_county_events(events):
+def render_county_events(events) -> None:
+    """Render county reassignment events for a year."""
     if not events:
         return
     st.markdown("### 🏛 County reassignments")
@@ -167,7 +198,8 @@ def render_county_events(events):
         )
 
 
-def render_type_events(events):
+def render_type_events(events) -> None:
+    """Render the settlement reclassification events for a year."""
     if not events:
         return
     st.markdown("### 🏘 Settlement reclassifications")
@@ -178,7 +210,8 @@ def render_type_events(events):
         render_badges(names)
 
 
-def main():
+def main() -> None:
+    """Render the full fun-facts page."""
     st.set_page_config(page_title="Fun Facts", layout="wide")
     ctx = get_context(
         min_pop_for_gender_ratio=MIN_POP_FOR_GENDER_RATIO,
