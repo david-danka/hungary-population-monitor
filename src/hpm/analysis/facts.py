@@ -62,9 +62,7 @@ def most_recent_new_settlement(appeared: pd.Series) -> tuple[str, int] | None:
     """The settlement that most recently became independently tracked."""
     if appeared.empty:
         return None
-    settlement = (
-        appeared.idxmax() if False else appeared.sort_values().index[-1]
-    )
+    settlement = appeared.idxmax()
     return settlement, int(appeared.loc[settlement])
 
 
