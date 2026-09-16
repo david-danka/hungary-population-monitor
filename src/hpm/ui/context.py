@@ -4,7 +4,11 @@ from dataclasses import dataclass
 from functools import cached_property
 import pandas as pd
 
-from hpm.analysis.datasets import population_settlements, county_boundaries
+from hpm.analysis.datasets import (
+    population_settlements,
+    county_boundaries,
+    settlement_boundaries,
+)
 from hpm.analysis.overview import (
     year_bounds,
     national_population_at,
@@ -64,6 +68,7 @@ class AppData:
     df: pd.DataFrame
     first_year: int
     last_year: int
+    settlement_geojson: dict
 
 
 def load_app_data() -> AppData:
@@ -75,7 +80,7 @@ def load_app_data() -> AppData:
     """
     df = population_settlements()
     first_year, last_year = year_bounds(df)
-    return AppData(df=df, first_year=first_year, last_year=last_year)
+    return AppData(df=df, first_year=first_year, last_year=last_year, settlement_geojson=settlement_boundaries())
 
 
 @dataclass(frozen=True)

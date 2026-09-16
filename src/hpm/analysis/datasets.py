@@ -5,7 +5,19 @@ import pandas as pd
 from hpm.db import query
 from hpm.settings import settings
 
-COUNTY_GEOJSON_PATH = settings.base_dir / "data" / "geo" / "hungary_counties.geojson"
+COUNTY_GEOJSON_PATH = (
+    settings.base_dir
+    / "data"
+    / "geo"
+    / "hungary_counties_topo_simplified.geojson"
+)
+
+SETTLEMENT_GEOJSON_PATH = (
+    settings.base_dir
+    / "data"
+    / "geo"
+    / "hungary_settlements_topo_simplified.geojson"
+)
 
 
 def population_settlements():
@@ -41,5 +53,11 @@ def county_boundaries() -> dict:
     return json.loads(COUNTY_GEOJSON_PATH.read_text(encoding="utf-8"))
 
 
-if __name__ == "__main__":
-    print(county_boundaries())
+def settlement_boundaries() -> dict:
+    """Return the GeoJSON settlement boundaries for Hungary.
+
+    Returns:
+        A GeoJSON FeatureCollection containing settlement geometries keyed by
+        the settlement name in each feature's properties.
+    """
+    return json.loads(SETTLEMENT_GEOJSON_PATH.read_text(encoding="utf-8"))
