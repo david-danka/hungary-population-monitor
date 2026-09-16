@@ -1,6 +1,5 @@
 """Streamlit page for highlighting settlements that gained or lost population."""
 
-import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
@@ -169,24 +168,25 @@ def render_map(ctx: ChangePageContext) -> None:
         "national average still reads as 'doing OK'."
     )
 
-    view = ctx.change_with_category
-    fig = px.scatter_map(
-        view,
-        lat="latitude",
-        lon="longitude",
-        size=np.sqrt(view["population_last"]),
-        size_max=30,
+    fig = px.choropleth_map(
+        ctx.change_with_category,
+        geojson=ctx.app.settlement_geojson,
+        locations="settlement_name",
+        featureidkey="properties.settlement_name",
         color="relative_category",
         color_discrete_map=RELATIVE_CATEGORY_COLORS,
-        hover_name="settlement_name",
-        hover_data={"pct_change": ":.1f", "abs_change": ":,.0f"},
+        center={"lat": 47.1625, "lon": 19.5033},
         zoom=6,
         height=650,
         title=f"Settlement performance, {ctx.app.first_year} → {ctx.app.last_year}",
+        hover_name="settlement_name",
+        hover_data={"pct_change": ":.1f", "abs_change": ":,.0f"}
     )
+
     fig.update_layout(
         map_style="carto-positron", margin={"r": 0, "t": 40, "l": 0, "b": 0}
     )
+
     st.plotly_chart(fig, width="stretch", theme="streamlit")
 
 
