@@ -113,30 +113,31 @@ def render_national_trend(ctx: OverviewPageContext) -> None:
 
 def render_map(ctx: OverviewPageContext) -> None:
     """Render the interactive settlement map for the latest year."""
-    import numpy as np
 
     settlements = ctx.settlements
     types = sorted(settlements["settlement_type"].unique())
     selected = st.multiselect("Settlement type", types, default=types)
     view = settlements[settlements["settlement_type"].isin(selected)]
 
-    fig = px.scatter_map(
+    fig = px.choropleth_map(
         view,
-        lat="latitude",
-        lon="longitude",
-        size=np.sqrt(view["population"]),
-        size_max=30,
+        geojson=ctx.app.settlement_geojson,
+        locations="settlement_name",
+        featureidkey="properties.settlement_name",
         color="settlement_type",
-        hover_name="settlement_name",
-        hover_data={"population": True, "settlement_type": True},
+        center={"lat": 47.1625, "lon": 19.5033},
         zoom=6,
         height=650,
-        title=f"Settlements by population, {ctx.app.last_year}",
+        hover_name="settlement_name",
+        hover_data={"population": True, "settlement_type": True},
+        title=f"Settlements by type, {ctx.app.last_year}",
     )
+
     fig.update_layout(
         map_style="carto-positron",
         margin={"r": 0, "t": 40, "l": 0, "b": 0},
     )
+
     st.plotly_chart(fig, width="stretch", theme="streamlit")
 
 
