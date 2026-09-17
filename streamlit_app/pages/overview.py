@@ -61,22 +61,21 @@ def render_headline_metrics(ctx: OverviewPageContext) -> None:
         ctx: The overview page context containing the headline metrics.
     """
     m = ctx.metrics
-    col1, col2, col3 = st.columns(3)
 
-    col1.metric(
+    st.metric(
         label=f"Population ({ctx.app.last_year})",
         value=m.latest,
         delta=m.change,
         format="%,.0f",
     )
-    col2.metric(
+    st.metric(
         label=f"Change since {ctx.app.first_year}",
         value=m.change_pct,
         delta=m.cagr,
         format="%.2f%%",
         delta_description="yearly CAGR",
     )
-    col3.metric(
+    st.metric(
         label="Settlements tracked",
         value=m.n_settlements,
         format="%,.0f",
@@ -171,11 +170,16 @@ def main() -> None:
     )
 
     render_thesis()
-    render_decline_yardstick(ctx)
-    render_headline_metrics(ctx)
+
+    left, right = st.columns([1, 1.618])
+    with left:
+        render_decline_yardstick(ctx)
+        render_headline_metrics(ctx)
+    with right:
+        render_national_trend(ctx)
+
     st.divider()
 
-    render_section("📈 The national trend", render_national_trend, ctx)
     render_section("🗺️ Where people live", render_map, ctx)
     render_concentration_teaser(ctx)
 
