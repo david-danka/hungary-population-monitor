@@ -216,7 +216,12 @@ def main() -> None:
         min_pop_for_gender_ratio=MIN_POP_FOR_GENDER_RATIO,
     )
 
-    st.title("🔎 Fun Facts")
+    st.title("💡 Fun Facts")
+    st.markdown(
+        "New settlements, county reassignments, mergers, and demographic "
+        "extremes — the administrative texture behind the national numbers, "
+        "year by year."
+    )
     render_summary_metrics(ctx)
     render_highlights(ctx)
     render_history(ctx)
