@@ -124,7 +124,6 @@ def render_gender_ratio(ctx: ExplorerPageContext, settlement_name: str) -> None:
 
 def main() -> None:
     """Render the full explorer page."""
-    st.set_page_config(page_title="Explorer", layout="wide")
     ctx = get_context()
 
     render_thesis()

@@ -141,10 +141,6 @@ def render_gini_trend(ctx: GeographyPageContext) -> None:
 
 def main() -> None:
     """Render the full geography page."""
-    st.set_page_config(
-        page_title="Geography — Hungary Population", layout="wide"
-    )
-
     ctx = get_context(
         concentration_n=CONCENTRATION_N,
     )

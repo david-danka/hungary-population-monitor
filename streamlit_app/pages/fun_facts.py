@@ -212,7 +212,6 @@ def render_type_events(events) -> None:
 
 def main() -> None:
     """Render the full fun-facts page."""
-    st.set_page_config(page_title="Fun Facts", layout="wide")
     ctx = get_context(
         min_pop_for_gender_ratio=MIN_POP_FOR_GENDER_RATIO,
     )

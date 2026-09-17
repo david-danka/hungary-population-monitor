@@ -160,8 +160,6 @@ def render_section(
 
 def main() -> None:
     """Render the full overview page."""
-    st.set_page_config(page_title="The Shrinking Whole", layout="wide")
-
     ctx = get_context(
         concentration_n=CONCENTRATION_N,
         top_bottom_n=TOP_BOTTOM_N,

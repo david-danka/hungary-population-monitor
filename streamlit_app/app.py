@@ -30,7 +30,10 @@ pg = st.navigation({
     ],
 })
 
-st.set_page_config(page_title="Hungary Population Monitor", page_icon=str(FAVICON_PATH))
-
+st.set_page_config(
+    page_title="Hungary Population Monitor",
+    page_icon=str(FAVICON_PATH),
+    layout="wide",
+)
 
 pg.run()

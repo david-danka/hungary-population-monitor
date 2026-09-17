@@ -192,8 +192,6 @@ def render_map(ctx: ChangePageContext) -> None:
 
 def main() -> None:
     """Render the full winners-and-losers page."""
-    st.set_page_config(page_title="Winners & Losers", layout="wide")
-
     ctx = get_context(
         n_decline_contribution=N_DECLINE_CONTRIBUTION,
     )
