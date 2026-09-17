@@ -9,8 +9,12 @@ executed, ensuring each page runs against the same initialized
 environment.
 """
 
+from pathlib import Path
+
 import streamlit as st
 from hpm.bootstrap import prepare
+
+FAVICON_PATH = Path(__file__).resolve().parent / "assets" / "hungary_flag.png"
 
 prepare()
 
@@ -21,6 +25,6 @@ pg = st.navigation([
     st.Page("pages/explorer.py", title="Explorer", icon=":material/search_insights:"),
     st.Page("pages/fun_facts.py", title="Fun Facts", icon=":material/lightbulb:"),
 ])
-st.set_page_config(page_title="Hungary Population Monitor", page_icon=":material/bar_chart:")
+st.set_page_config(page_title="Hungary Population Monitor", page_icon=str(FAVICON_PATH))
 
 pg.run()
