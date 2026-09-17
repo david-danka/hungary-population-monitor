@@ -40,6 +40,7 @@ def get_context(n_decline_contribution: int) -> ChangePageContext:
 
 def render_thesis() -> None:
     """Render the introductory copy for the winners-and-losers page."""
+    st.caption("Part 3 of 3: Winners & Losers")
     st.title("📊 Winners & Losers")
     st.markdown(
         "The national decline isn't one uniform slide — it's concentrated "
@@ -197,15 +198,14 @@ def main() -> None:
     )
 
     render_thesis()
-    render_decline_contribution(ctx)
-    st.divider()
-    render_growth_decline_count(ctx)
-    render_growth_decline_summary(ctx)
-    render_growth_decline_by_year(ctx)
+    render_map(ctx)
     st.divider()
     render_leaderboard(ctx)
     st.divider()
-    render_map(ctx)
+    render_decline_contribution(ctx)
+    render_growth_decline_count(ctx)
+    render_growth_decline_summary(ctx)
+    render_growth_decline_by_year(ctx)
 
 
 main()
