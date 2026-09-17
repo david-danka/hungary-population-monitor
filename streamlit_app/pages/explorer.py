@@ -24,7 +24,7 @@ def render_thesis() -> None:
     """Render the introductory copy for the explorer page."""
     st.title("🔎 Explorer")
     st.markdown(
-        "Look up any settlement and see its own story against the national one."
+        "Look up any settlement and see its own story."
     )
 
 
@@ -38,8 +38,12 @@ def render_selector(ctx: ExplorerPageContext) -> str:
         The selected settlement name.
     """
     options = ctx.options
-    choice = st.selectbox("Settlement", options["label"])
-    return options.loc[options["label"] == choice, "settlement_name"].iloc[0]
+    labels = options["label"].tolist()
+    settlement_names = options["settlement_name"].tolist()
+    default_index = settlement_names.index("Budapest") if "Budapest" in settlement_names else 0
+
+    choice = st.selectbox("Settlement", labels, index=default_index)
+    return settlement_names[labels.index(choice)]
 
 
 def render_summary(ctx: ExplorerPageContext, settlement_name: str) -> None:
