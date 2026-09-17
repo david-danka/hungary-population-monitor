@@ -41,11 +41,16 @@ def get_context(
 
 def render_thesis() -> None:
     """Render the editorial introduction for the overview page."""
-    st.title("🇭🇺 The Shrinking Whole")
+    st.caption("Part 1 of 3: The Decline")
+    st.title("📉 National Overview")
     st.markdown(
-        "Hungary's population has been declining for decades — and the "
+        "This dashboard traces one story in three parts: a nation that's "
+        "shrinking, unevenly, and the specific places absorbing the loss. "
+    )
+    st.markdown(
+        "Hungary's population has been declining for decades: and the "
         "decline isn't spread evenly. This page shows the national arc; "
-        "later pages dig into *where* it's hitting hardest and *why*."
+        "later pages dig into *where* it's hitting hardest."
     )
 
 
@@ -166,13 +171,13 @@ def main() -> None:
     )
 
     render_thesis()
-    render_headline_metrics(ctx)
-    render_concentration_teaser(ctx)
     render_decline_yardstick(ctx)
+    render_headline_metrics(ctx)
     st.divider()
 
     render_section("📈 The national trend", render_national_trend, ctx)
     render_section("🗺️ Where people live", render_map, ctx)
+    render_concentration_teaser(ctx)
 
 
 main()
