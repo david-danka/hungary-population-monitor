@@ -32,7 +32,8 @@ def get_context(concentration_n: int) -> GeographyPageContext:
 
 def render_thesis() -> None:
     """Render the introduction to the geography page."""
-    st.title("🧭 Where It Concentrates")
+    st.caption("Part 2 of 3: Where It Concentrates")
+    st.title("🗺️ Where It Concentrates")
     st.markdown(
         "The national decline hides a second story: population is pooling "
         "into fewer, larger places while the countryside empties out faster "
@@ -147,9 +148,9 @@ def main() -> None:
 
     render_thesis()
     st.divider()
-    render_choropleth(ctx)
-    st.divider()
     render_concentration_trend(ctx)
+    st.divider()
+    render_choropleth(ctx)
     st.divider()
 
     col1, col2 = st.columns(2)
@@ -159,9 +160,9 @@ def main() -> None:
         render_gini_trend(ctx)
     st.divider()
 
-    render_dominance_table(ctx)
-    st.divider()
     render_county_trends(ctx)
+    st.divider()
+    render_dominance_table(ctx)
 
 
 main()
