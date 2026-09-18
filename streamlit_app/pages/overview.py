@@ -41,16 +41,16 @@ def get_context(
 
 def render_thesis() -> None:
     """Render the editorial introduction for the overview page."""
-    st.caption("Part 1 of 3: The Decline")
+    st.caption("Part 1 of 2: The Decline")
     st.title("📉 National Overview")
     st.markdown(
-        "This dashboard traces one story in three parts: a nation that's "
-        "shrinking, unevenly, and the specific places absorbing the loss. "
+        "This dashboard traces one story in two parts: a nation that's "
+        "shrinking, and the specific places absorbing the loss. "
     )
     st.markdown(
         "Hungary's population has been declining for decades: and the "
         "decline isn't spread evenly. This page shows the national arc; "
-        "later pages dig into *where* it's hitting hardest."
+        "the next page digs into *where* it's hitting hardest."
     )
 
 
@@ -88,7 +88,7 @@ def render_concentration_teaser(ctx: OverviewPageContext) -> None:
     st.info(
         f"📌 The **{CONCENTRATION_N} largest settlements** ({CONCENTRATION_N / ctx.metrics.n_settlements * 100:.2f}%) hold "
         f"**{share:.1f}%** of the national population, as of {ctx.app.last_year}. "
-        "See the *Geography* page for how this concentration is shifting over time."
+        "See *Winners & Losers* for exactly which settlements are driving the decline."
     )
 
 
@@ -116,23 +116,21 @@ def render_national_trend(ctx: OverviewPageContext) -> None:
 
 
 def render_map(ctx: OverviewPageContext) -> None:
-    """Render the settlement map colored by growth or decline since the first year."""
-
-    view = ctx.settlement_change
+    """Render the county-level choropleth map of population change."""
 
     fig = px.choropleth_map(
-        view,
-        geojson=ctx.app.settlement_geojson,
-        locations="settlement_name",
-        featureidkey="properties.settlement_name",
-        color="direction",
-        color_discrete_map={"Growth": "#2ca02c", "Decline": "#d62728"},
+        ctx.county_change,
+        geojson=ctx.county_geojson,
+        locations="county_name",
+        featureidkey="properties.county_name",
+        color="pct_change",
+        color_continuous_scale="RdYlGn",
+        color_continuous_midpoint=0,
         center={"lat": 47.1625, "lon": 19.5033},
         zoom=6,
         height=650,
-        hover_name="settlement_name",
-        hover_data={"pct_change": ":.1f", "abs_change": ":,.0f"},
-        title=f"Settlements by population change, {ctx.app.first_year}–{ctx.app.last_year}",
+        hover_name="county_name",
+        title=f"County population change, {ctx.app.first_year}–{ctx.app.last_year}",
     )
 
     fig.update_layout(

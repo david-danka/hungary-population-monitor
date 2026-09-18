@@ -49,28 +49,6 @@ def settlement_type_mix_by_year(df: pd.DataFrame, year: int) -> pd.DataFrame:
         .sum()
     )
 
-def county_population_change(df: pd.DataFrame, first_year: int, last_year: int) -> pd.DataFrame:
-    """Computes per-county population change between two years.
-
-    Args:
-        df: Wide settlement-population table with `year`, `county_name`,
-            and `population` columns.
-        first_year: Baseline year to measure the change against.
-        last_year: End year to subtract the baseline year's values from.
-
-    Returns:
-        One row per county present in both years, with columns
-        `county_name`, `population_first`, `population_last`,
-        `pct_change`, and `abs_change`. Intended as the color source for
-        a choropleth map.
-    """
-    first = df[df["year"] == first_year].groupby("county_name", as_index=False)["population"].sum()
-    last = df[df["year"] == last_year].groupby("county_name", as_index=False)["population"].sum()
-    merged = first.merge(last, on="county_name", suffixes=("_first", "_last"))
-    merged["pct_change"] = (merged["population_last"] / merged["population_first"] - 1) * 100
-    merged["abs_change"] = merged["population_last"] - merged["population_first"]
-    return merged
-
 def concentration_share_trend(df: pd.DataFrame, n: int) -> pd.DataFrame:
     """Computes the share of national population held by the N largest settlements, per year.
 

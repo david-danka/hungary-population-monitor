@@ -21,7 +21,6 @@ prepare()
 pg = st.navigation({
     "The Argument": [
         st.Page("pages/overview.py", title="Overview", icon="📉", default=True),
-        st.Page("pages/geography.py", title="Geography", icon="🗺️"),
         st.Page("pages/winners_losers.py", title="Winners & Losers", icon="📊"),
     ],
     "Explore It Yourself": [

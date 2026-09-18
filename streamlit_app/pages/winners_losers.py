@@ -46,7 +46,7 @@ def get_context(n_decline_contribution: int) -> ChangePageContext:
 
 def render_thesis() -> None:
     """Render the introductory copy for the winners-and-losers page."""
-    st.caption("Part 3 of 3: Winners & Losers")
+    st.caption("Part 2 of 2: Winners & Losers")
     st.title("📊 Winners & Losers")
     st.markdown(
         "The national decline isn't one uniform slide — it's concentrated "

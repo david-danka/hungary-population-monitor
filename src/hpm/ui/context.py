@@ -23,16 +23,8 @@ from hpm.analysis.overview import (
     population_change_extremes,
     concentration_share_by_year,
     closest_settlement_by_population,
-    PopulationChangeExtremes,
-)
-from hpm.analysis.geography import (
     county_population_change,
-    concentration_share_trend,
-    largest_settlement_share_by_county,
-    county_population_trend,
-    index_to_first_year,
-    lorenz_curve,
-    settlement_gini_by_year,
+    PopulationChangeExtremes,
 )
 from hpm.analysis.change import (
     settlement_change,
@@ -159,9 +151,16 @@ class OverviewPageContext:
         )
 
     @cached_property
-    def settlement_change(self) -> pd.DataFrame:
-        """Return per-settlement population change since the first year."""
-        return settlement_change(self.app.df, self.app.first_year, self.app.last_year)
+    def county_change(self) -> pd.DataFrame:
+        """Return county-level population change percentages."""
+        return county_population_change(
+            self.app.df, self.app.first_year, self.app.last_year
+        )
+
+    @cached_property
+    def county_geojson(self) -> dict:
+        """Return the county boundary GeoJSON for mapping."""
+        return county_boundaries()
 
 
 def build_overview_context(
@@ -200,74 +199,6 @@ def build_overview_context(
         top_n_settlements=top_n_settlements,
         top_bottom_n=top_bottom_n,
     )
-
-
-@dataclass
-class GeographyPageContext:
-    """Context object for the geography page and related charts."""
-
-    app: AppData
-    concentration_n: int
-
-    @cached_property
-    def county_change(self) -> pd.DataFrame:
-        """Return county-level population change percentages."""
-        return county_population_change(
-            self.app.df, self.app.first_year, self.app.last_year
-        )
-
-    @cached_property
-    def county_geojson(self) -> dict:
-        """Return the county boundary GeoJSON for mapping."""
-        return county_boundaries()
-
-    @cached_property
-    def concentration_trend(self) -> pd.DataFrame:
-        """Return the concentration trend of the largest settlements."""
-        return concentration_share_trend(self.app.df, self.concentration_n)
-
-    @cached_property
-    def largest_settlement_dominance(self) -> pd.DataFrame:
-        """Return how dominant each county's largest settlement is."""
-        return largest_settlement_share_by_county(
-            self.app.df, self.app.last_year
-        )
-
-    @cached_property
-    def county_population_trend(self) -> pd.DataFrame:
-        """Return the population trend for each county."""
-        return county_population_trend(self.app.df)
-
-    @cached_property
-    def county_trend_indexed(self) -> pd.DataFrame:
-        """Return the county trend indexed to the first year."""
-        return index_to_first_year(self.county_population_trend, "county_name")
-
-    @cached_property
-    def lorenz(self) -> pd.DataFrame:
-        """Return the Lorenz curve data for settlement inequality."""
-        return lorenz_curve(self.app.df, self.app.last_year)
-
-    @cached_property
-    def gini_trend(self) -> pd.DataFrame:
-        """Return the settlement Gini coefficient trend over time."""
-        return settlement_gini_by_year(self.app.df)
-
-
-def build_geography_context(
-    app: AppData, concentration_n: int
-) -> GeographyPageContext:
-    """Build the geography-page context for the current app data.
-
-    Args:
-        app: The loaded application data.
-        concentration_n: Number of largest settlements used in concentration
-            analysis.
-
-    Returns:
-        A geography page context object.
-    """
-    return GeographyPageContext(app=app, concentration_n=concentration_n)
 
 
 @dataclass
