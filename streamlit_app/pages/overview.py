@@ -12,6 +12,55 @@ from hpm.ui.context import build_overview_context, OverviewPageContext
 CONCENTRATION_N = 50
 TOP_BOTTOM_N = 10
 
+RELATIVE_CATEGORY_COLORS = {
+    "Growing": "#2ca02c",
+    "Declining slower than national average": "#f4c542",
+    "Declining faster than national average": "#d62728",
+}
+
+DIVERGING_SCALE = [
+    RELATIVE_CATEGORY_COLORS["Declining faster than national average"],
+    RELATIVE_CATEGORY_COLORS["Declining slower than national average"],
+    RELATIVE_CATEGORY_COLORS["Growing"],
+]
+
+COUNTY_MAP_MODES = {
+    "Relative to national": {
+        "data": "county_change_with_category",
+        "color": "relative_category",
+        "color_discrete_map": RELATIVE_CATEGORY_COLORS,
+        "title": "County performance, {first_year} → {last_year}",
+        "caption": (
+            "Counties are colored by how they compare to the national "
+            "baseline, not raw magnitude — so a county losing population "
+            "slower than the national average still reads as 'doing OK'."
+        ),
+    },
+    "Percent magnitude": {
+        "data": "county_change",
+        "color": "pct_change",
+        "color_continuous_scale": DIVERGING_SCALE,
+        "color_continuous_midpoint": 0,
+        "title": "County performance by magnitude, {first_year} → {last_year}",
+        "caption": (
+            "Ignores the national baseline entirely — color reflects each "
+            "county's own percentage change directly."
+        ),
+    },
+    "Absolute headcount": {
+        "data": "county_change",
+        "color": "abs_change",
+        "color_continuous_scale": DIVERGING_SCALE,
+        "color_continuous_midpoint": 0,
+        "title": "County performance by headcount, {first_year} → {last_year}",
+        "caption": (
+            "Colored by raw population gained or lost, not percentage — "
+            "this is where the national decline's actual bodies are "
+            "concentrated."
+        ),
+    },
+}
+
 
 @st.cache_data()
 def get_context(
@@ -116,21 +165,29 @@ def render_national_trend(ctx: OverviewPageContext) -> None:
 
 
 def render_map(ctx: OverviewPageContext) -> None:
-    """Render the county-level choropleth map of population change."""
+    """Render the county-level choropleth map, colored by a user-selectable lens."""
+    mode = st.radio("Color by", list(COUNTY_MAP_MODES), horizontal=True)
+    settings = COUNTY_MAP_MODES[mode]
+
+    st.caption(settings["caption"])
 
     fig = px.choropleth_map(
-        ctx.county_change,
+        getattr(ctx, settings["data"]),
         geojson=ctx.county_geojson,
         locations="county_name",
         featureidkey="properties.county_name",
-        color="pct_change",
-        color_continuous_scale="RdYlGn",
-        color_continuous_midpoint=0,
+        color=settings["color"],
+        color_discrete_map=settings.get("color_discrete_map"),
+        color_continuous_scale=settings.get("color_continuous_scale"),
+        color_continuous_midpoint=settings.get("color_continuous_midpoint"),
+        range_color=settings.get("range_color"),
         center={"lat": 47.1625, "lon": 19.5033},
         zoom=6,
         height=650,
         hover_name="county_name",
-        title=f"County population change, {ctx.app.first_year}–{ctx.app.last_year}",
+        title=settings["title"].format(
+            first_year=ctx.app.first_year, last_year=ctx.app.last_year
+        ),
     )
 
     fig.update_layout(

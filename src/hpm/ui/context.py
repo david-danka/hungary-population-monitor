@@ -162,6 +162,11 @@ class OverviewPageContext:
         """Return the county boundary GeoJSON for mapping."""
         return county_boundaries()
 
+    @cached_property
+    def county_change_with_category(self) -> pd.DataFrame:
+        """Return county-level changes annotated with relative category labels."""
+        return relative_change_category(self.county_change, self.metrics.change_pct)
+
 
 def build_overview_context(
     app: AppData, top_n_settlements: int, top_bottom_n: int
