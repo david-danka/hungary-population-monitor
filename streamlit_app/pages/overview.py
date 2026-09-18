@@ -116,25 +116,23 @@ def render_national_trend(ctx: OverviewPageContext) -> None:
 
 
 def render_map(ctx: OverviewPageContext) -> None:
-    """Render the interactive settlement map for the latest year."""
+    """Render the settlement map colored by growth or decline since the first year."""
 
-    settlements = ctx.settlements
-    types = sorted(settlements["settlement_type"].unique())
-    selected = st.multiselect("Settlement type", types, default=types)
-    view = settlements[settlements["settlement_type"].isin(selected)]
+    view = ctx.settlement_change
 
     fig = px.choropleth_map(
         view,
         geojson=ctx.app.settlement_geojson,
         locations="settlement_name",
         featureidkey="properties.settlement_name",
-        color="settlement_type",
+        color="direction",
+        color_discrete_map={"Growth": "#2ca02c", "Decline": "#d62728"},
         center={"lat": 47.1625, "lon": 19.5033},
         zoom=6,
         height=650,
         hover_name="settlement_name",
-        hover_data={"population": True, "settlement_type": True},
-        title=f"Settlements by type, {ctx.app.last_year}",
+        hover_data={"pct_change": ":.1f", "abs_change": ":,.0f"},
+        title=f"Settlements by population change, {ctx.app.first_year}–{ctx.app.last_year}",
     )
 
     fig.update_layout(
@@ -180,7 +178,7 @@ def main() -> None:
 
     st.divider()
 
-    render_section("🗺️ Where people live", render_map, ctx)
+    render_section("🗺️ Growing vs. shrinking", render_map, ctx)
     render_concentration_teaser(ctx)
 
 

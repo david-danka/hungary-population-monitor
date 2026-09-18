@@ -158,6 +158,11 @@ class OverviewPageContext:
             self.app.df, self.app.last_year, abs(self.metrics.change)
         )
 
+    @cached_property
+    def settlement_change(self) -> pd.DataFrame:
+        """Return per-settlement population change since the first year."""
+        return settlement_change(self.app.df, self.app.first_year, self.app.last_year)
+
 
 def build_overview_context(
     app: AppData, top_n_settlements: int, top_bottom_n: int
