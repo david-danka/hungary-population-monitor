@@ -3,6 +3,7 @@
 from collections.abc import Callable
 
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 from shared import get_app_data, warm_cached_properties, RELATIVE_CATEGORY_COLORS, DIVERGING_SCALE
@@ -11,6 +12,7 @@ from hpm.ui.context import build_overview_context, OverviewPageContext
 # Editorial constants
 CONCENTRATION_N = 50
 TOP_BOTTOM_N = 10
+N_DECLINE_CONTRIBUTION = 50
 
 COUNTY_MAP_MODES = {
     "Relative to national": {
@@ -54,6 +56,7 @@ COUNTY_MAP_MODES = {
 def get_context(
     concentration_n: int,
     top_bottom_n: int,
+    n_decline_contribution: int,
 ) -> OverviewPageContext:
     """Build the cached context object for the overview page.
 
@@ -62,6 +65,8 @@ def get_context(
             concentration summary.
         top_bottom_n: Number of settlements to highlight in the extreme
             change view.
+        n_decline_contribution: Number of largest losers to use when
+            estimating their contribution to overall decline.
 
     Returns:
         A populated overview-page context object.
@@ -71,6 +76,7 @@ def get_context(
         app=app,
         top_n_settlements=concentration_n,
         top_bottom_n=top_bottom_n,
+        n_largest_losers=n_decline_contribution,
     )
     warm_cached_properties(ctx)
     return ctx
@@ -152,6 +158,81 @@ def render_national_trend(ctx: OverviewPageContext) -> None:
     )
 
 
+def render_decline_contribution(ctx: OverviewPageContext) -> None:
+    """Render the contribution of the biggest losers to overall decline."""
+    pct = ctx.decline_contribution
+    st.info(
+        f"📌 The **{N_DECLINE_CONTRIBUTION} settlements** with the steepest population losses "
+        f"account for **{pct:.1f}%** of all population lost across every "
+        f"shrinking settlement in the dataset."
+    )
+
+
+def render_growth_decline_count(ctx: OverviewPageContext) -> None:
+    """Render the headline counts of growing and declining settlements."""
+    counts = ctx.direction_counts
+    c1, c2 = st.columns(2)
+    c1.metric("📈 Settlements grew", counts["Growth"])
+    c2.metric("📉 Settlements declined", counts["Decline"])
+
+
+def render_growth_decline_summary(ctx: OverviewPageContext) -> None:
+    """Render the waterfall summary of growth, decline, and net change."""
+    totals = ctx.total_change_by_direction
+    fig = go.Figure(
+        go.Waterfall(
+            x=totals["label"],
+            y=totals["value"],
+            measure=totals["measure"],
+            decreasing={"marker": {"color": "#d62728"}},
+            increasing={"marker": {"color": "#2ca02c"}},
+            totals={"marker": {"color": "#1f77b4"}},
+            text=[f"{v:,.0f}" for v in totals["value"]],
+            textposition="outside",
+        )
+    )
+    fig.update_layout(
+        title="Growth, decline, and the net", showlegend=False, height=350
+    )
+    st.plotly_chart(fig, width="stretch")
+    st.caption(
+        f"Net change here should roughly match the national YoY figure "
+        f"above ({ctx.app.first_year}→{ctx.app.last_year} settlement-level sum); "
+        "small differences can arise from settlements appearing/merging between years."
+    )
+
+
+def render_growth_decline_by_year(ctx: OverviewPageContext) -> None:
+    """Render the year-by-year chart of growth, decline, and net change."""
+    yearly = ctx.yearly_totals
+    fig = go.Figure()
+    fig.add_bar(
+        x=yearly["year"],
+        y=yearly["total_growth"],
+        name="Growth",
+        marker_color="#2ca02c",
+    )
+    fig.add_bar(
+        x=yearly["year"],
+        y=yearly["total_decline"],
+        name="Decline",
+        marker_color="#d62728",
+    )
+    fig.add_scatter(
+        x=yearly["year"],
+        y=yearly["net"],
+        name="Net",
+        mode="lines+markers",
+        line_color="#1f77b4",
+    )
+    fig.update_layout(
+        barmode="relative",
+        title="Growth, decline, and the net — by year",
+        height=400,
+    )
+    st.plotly_chart(fig, width="stretch")
+
+
 def render_map(ctx: OverviewPageContext) -> None:
     """Render the county-level choropleth map, colored by a user-selectable lens."""
     mode = st.radio("Color by", list(COUNTY_MAP_MODES), horizontal=True)
@@ -208,6 +289,7 @@ def main() -> None:
     ctx = get_context(
         concentration_n=CONCENTRATION_N,
         top_bottom_n=TOP_BOTTOM_N,
+        n_decline_contribution=N_DECLINE_CONTRIBUTION,
     )
 
     render_thesis()
@@ -218,6 +300,13 @@ def main() -> None:
         render_headline_metrics(ctx)
     with right:
         render_national_trend(ctx)
+
+    st.divider()
+
+    render_decline_contribution(ctx)
+    render_growth_decline_count(ctx)
+    render_growth_decline_summary(ctx)
+    render_growth_decline_by_year(ctx)
 
     st.divider()
 

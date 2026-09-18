@@ -1,32 +1,21 @@
 """Streamlit page for highlighting settlements that gained or lost population."""
 
 import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 
 from shared import get_app_data, warm_cached_properties, RELATIVE_CATEGORY_COLORS, DIVERGING_SCALE
 from hpm.ui.context import build_change_context, ChangePageContext
 
-# Editorial constants, not exposed to users
-N_DECLINE_CONTRIBUTION = 50
-
 
 @st.cache_data()
-def get_context(n_decline_contribution: int) -> ChangePageContext:
+def get_context() -> ChangePageContext:
     """Build the cached change-page context.
-
-    Args:
-        n_decline_contribution: Number of largest losers to use when estimating
-            their contribution to overall decline.
 
     Returns:
         A populated change-page context object.
     """
     app = get_app_data()
-    ctx = build_change_context(
-        app=app,
-        n_largest_losers=n_decline_contribution,
-    )
+    ctx = build_change_context(app=app)
     warm_cached_properties(ctx)
     return ctx
 
@@ -40,81 +29,6 @@ def render_thesis() -> None:
         "in a specific set of places, while others are actually growing. "
         "This page names them."
     )
-
-
-def render_decline_contribution(ctx: ChangePageContext) -> None:
-    """Render the contribution of the biggest losers to overall decline."""
-    pct = ctx.decline_contribution
-    st.info(
-        f"📌 The **{N_DECLINE_CONTRIBUTION} settlements** with the steepest population losses "
-        f"account for **{pct:.1f}%** of all population lost across every "
-        f"shrinking settlement in the dataset."
-    )
-
-
-def render_growth_decline_count(ctx: ChangePageContext) -> None:
-    """Render the headline counts of growing and declining settlements."""
-    counts = ctx.direction_counts
-    c1, c2 = st.columns(2)
-    c1.metric("📈 Settlements grew", counts["Growth"])
-    c2.metric("📉 Settlements declined", counts["Decline"])
-
-
-def render_growth_decline_summary(ctx: ChangePageContext) -> None:
-    """Render the waterfall summary of growth, decline, and net change."""
-    totals = ctx.total_change_by_direction
-    fig = go.Figure(
-        go.Waterfall(
-            x=totals["label"],
-            y=totals["value"],
-            measure=totals["measure"],
-            decreasing={"marker": {"color": "#d62728"}},
-            increasing={"marker": {"color": "#2ca02c"}},
-            totals={"marker": {"color": "#1f77b4"}},
-            text=[f"{v:,.0f}" for v in totals["value"]],
-            textposition="outside",
-        )
-    )
-    fig.update_layout(
-        title="Growth, decline, and the net", showlegend=False, height=350
-    )
-    st.plotly_chart(fig, width="stretch")
-    st.caption(
-        f"Net change here should roughly match the national YoY figure "
-        f"on Overview ({ctx.app.first_year}→{ctx.app.last_year} settlement-level sum); "
-        "small differences can arise from settlements appearing/merging between years."
-    )
-
-
-def render_growth_decline_by_year(ctx: ChangePageContext) -> None:
-    """Render the year-by-year chart of growth, decline, and net change."""
-    yearly = ctx.yearly_totals
-    fig = go.Figure()
-    fig.add_bar(
-        x=yearly["year"],
-        y=yearly["total_growth"],
-        name="Growth",
-        marker_color="#2ca02c",
-    )
-    fig.add_bar(
-        x=yearly["year"],
-        y=yearly["total_decline"],
-        name="Decline",
-        marker_color="#d62728",
-    )
-    fig.add_scatter(
-        x=yearly["year"],
-        y=yearly["net"],
-        name="Net",
-        mode="lines+markers",
-        line_color="#1f77b4",
-    )
-    fig.update_layout(
-        barmode="relative",
-        title="Growth, decline, and the net — by year",
-        height=400,
-    )
-    st.plotly_chart(fig, width="stretch")
 
 
 def render_leaderboard(ctx: ChangePageContext) -> None:
@@ -228,19 +142,12 @@ def render_map(ctx: ChangePageContext) -> None:
 
 def main() -> None:
     """Render the full winners-and-losers page."""
-    ctx = get_context(
-        n_decline_contribution=N_DECLINE_CONTRIBUTION,
-    )
+    ctx = get_context()
 
     render_thesis()
     render_map(ctx)
     st.divider()
     render_leaderboard(ctx)
-    st.divider()
-    render_decline_contribution(ctx)
-    render_growth_decline_count(ctx)
-    render_growth_decline_summary(ctx)
-    render_growth_decline_by_year(ctx)
 
 
 main()

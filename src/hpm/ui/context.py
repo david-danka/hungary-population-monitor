@@ -96,6 +96,7 @@ class OverviewPageContext:
     metrics: HeadlineMetrics
     top_bottom_n: int
     top_n_settlements: int
+    n_largest_losers: int
 
     @cached_property
     def national_trend(self):
@@ -167,9 +168,34 @@ class OverviewPageContext:
         """Return county-level changes annotated with relative category labels."""
         return relative_change_category(self.county_change, self.metrics.change_pct)
 
+    @cached_property
+    def change(self) -> pd.DataFrame:
+        """Return settlement-level change data across the observation window."""
+        return settlement_change(self.app.df, self.app.first_year, self.app.last_year)
+
+    @cached_property
+    def direction_counts(self) -> dict[str, int]:
+        """Return the counts of gaining versus declining settlements."""
+        return count_by_direction(self.change)
+
+    @cached_property
+    def total_change_by_direction(self) -> pd.DataFrame:
+        """Return a summary of total growth and decline by direction."""
+        return total_change_by_direction(self.change)
+
+    @cached_property
+    def yearly_totals(self) -> pd.DataFrame:
+        """Return yearly totals for growth, decline, and net change."""
+        return yearly_change_totals(self.app.df)
+
+    @cached_property
+    def decline_contribution(self) -> float:
+        """Return the share of total loss explained by the largest losers."""
+        return national_decline_contribution(self.change, self.n_largest_losers)
+
 
 def build_overview_context(
-    app: AppData, top_n_settlements: int, top_bottom_n: int
+    app: AppData, top_n_settlements: int, top_bottom_n: int, n_largest_losers: int
 ) -> OverviewPageContext:
     """Build the overview-page context from the base app data.
 
@@ -178,6 +204,8 @@ def build_overview_context(
         top_n_settlements: Number of largest settlements to include in the
             concentration summary.
         top_bottom_n: Number of extreme gain/loss settlements to include.
+        n_largest_losers: Number of steepest-declining settlements to use
+            when estimating their contribution to overall decline.
 
     Returns:
         A fully populated overview page context.
@@ -203,6 +231,7 @@ def build_overview_context(
         metrics=metrics,
         top_n_settlements=top_n_settlements,
         top_bottom_n=top_bottom_n,
+        n_largest_losers=n_largest_losers,
     )
 
 
@@ -211,7 +240,6 @@ class ChangePageContext:
     """Context object for the winners-and-losers page."""
 
     app: AppData
-    n_largest_losers: int
 
     @cached_property
     def change(self) -> pd.DataFrame:
@@ -221,16 +249,6 @@ class ChangePageContext:
             self.app.first_year,
             self.app.last_year,
         )
-
-    @cached_property
-    def direction_counts(self) -> dict[str, int]:
-        """Return the counts of gaining versus declining settlements."""
-        return count_by_direction(self.change)
-
-    @cached_property
-    def total_change_by_direction(self) -> pd.DataFrame:
-        """Return a summary of total growth and decline by direction."""
-        return total_change_by_direction(self.change)
 
     @cached_property
     def national_pct_change(self) -> float:
@@ -244,32 +262,17 @@ class ChangePageContext:
         """Return settlement changes annotated with relative category labels."""
         return relative_change_category(self.change, self.national_pct_change)
 
-    @cached_property
-    def yearly_totals(self) -> pd.DataFrame:
-        """Return yearly totals for growth, decline, and net change."""
-        return yearly_change_totals(self.app.df)
 
-    @cached_property
-    def decline_contribution(self) -> float:
-        """Return the share of total loss explained by the largest losers."""
-        return national_decline_contribution(
-            self.change, self.n_largest_losers
-        )
-
-
-def build_change_context(
-    app: AppData, n_largest_losers: int
-) -> ChangePageContext:
+def build_change_context(app: AppData) -> ChangePageContext:
     """Build the change-page context for the current app data.
 
     Args:
         app: The loaded application data.
-        n_largest_losers: Number of largest declining settlements to include.
 
     Returns:
         A change page context object.
     """
-    return ChangePageContext(app=app, n_largest_losers=n_largest_losers)
+    return ChangePageContext(app=app)
 
 
 @dataclass
