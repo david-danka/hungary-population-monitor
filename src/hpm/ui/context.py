@@ -19,9 +19,7 @@ from hpm.analysis.overview import (
     settlements_by_year,
     settlement_rank_size_by_year,
     settlement_type_mix_by_year,
-    largest_settlements_by_year,
     population_change_extremes,
-    concentration_share_by_year,
     closest_settlement_by_population,
     county_population_change,
     PopulationChangeExtremes,
@@ -95,7 +93,6 @@ class OverviewPageContext:
     app: AppData
     metrics: HeadlineMetrics
     top_bottom_n: int
-    top_n_settlements: int
     n_largest_losers: int
 
     @cached_property
@@ -119,13 +116,6 @@ class OverviewPageContext:
         return settlement_rank_size_by_year(self.app.df, self.app.last_year)
 
     @cached_property
-    def largest_settlements(self):
-        """Return the largest settlements for the latest year."""
-        return largest_settlements_by_year(
-            self.app.df, self.app.last_year, self.top_n_settlements
-        )
-
-    @cached_property
     def change_extremes(self) -> PopulationChangeExtremes:
         """Return the settlements with the largest gains and losses."""
         return population_change_extremes(
@@ -133,15 +123,6 @@ class OverviewPageContext:
             self.app.first_year,
             self.app.last_year,
             self.top_bottom_n,
-        )
-
-    @cached_property
-    def concentration_share(self) -> float:
-        """Return the concentration share for the top settlements."""
-        return concentration_share_by_year(
-            self.app.df,
-            self.app.last_year,
-            self.top_n_settlements,
         )
 
     @cached_property
@@ -178,14 +159,12 @@ class OverviewPageContext:
 
 
 def build_overview_context(
-    app: AppData, top_n_settlements: int, top_bottom_n: int, n_largest_losers: int
+    app: AppData, top_bottom_n: int, n_largest_losers: int
 ) -> OverviewPageContext:
     """Build the overview-page context from the base app data.
 
     Args:
         app: The loaded application data.
-        top_n_settlements: Number of largest settlements to include in the
-            concentration summary.
         top_bottom_n: Number of extreme gain/loss settlements to include.
         n_largest_losers: Number of steepest-declining settlements to use
             when estimating their contribution to overall decline.
@@ -212,7 +191,6 @@ def build_overview_context(
     return OverviewPageContext(
         app=app,
         metrics=metrics,
-        top_n_settlements=top_n_settlements,
         top_bottom_n=top_bottom_n,
         n_largest_losers=n_largest_losers,
     )

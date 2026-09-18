@@ -8,22 +8,18 @@ from shared import get_app_data, warm_cached_properties
 from hpm.ui.context import build_overview_context, OverviewPageContext
 
 # Editorial constants
-CONCENTRATION_N = 50
 TOP_BOTTOM_N = 10
 N_DECLINE_CONTRIBUTION = 50
 
 
 @st.cache_data()
 def get_context(
-    concentration_n: int,
     top_bottom_n: int,
     n_decline_contribution: int,
 ) -> OverviewPageContext:
     """Build the cached context object for the overview page.
 
     Args:
-        concentration_n: Number of largest settlements to consider in the
-            concentration summary.
         top_bottom_n: Number of settlements to highlight in the extreme
             change view.
         n_decline_contribution: Number of largest losers to use when
@@ -35,7 +31,6 @@ def get_context(
     app = get_app_data()
     ctx = build_overview_context(
         app=app,
-        top_n_settlements=concentration_n,
         top_bottom_n=top_bottom_n,
         n_largest_losers=n_decline_contribution,
     )
@@ -86,16 +81,6 @@ def render_headline_metrics(ctx: OverviewPageContext) -> None:
     )
 
 
-def render_concentration_teaser(ctx: OverviewPageContext) -> None:
-    """Render an informational teaser about settlement concentration."""
-    share = ctx.concentration_share
-    st.info(
-        f"📌 The **{CONCENTRATION_N} largest settlements** ({CONCENTRATION_N / ctx.metrics.n_settlements * 100:.2f}%) hold "
-        f"**{share:.1f}%** of the national population, as of {ctx.app.last_year}. "
-        "See *Winners & Losers* for exactly which settlements are driving the decline."
-    )
-
-
 def render_decline_yardstick(ctx: OverviewPageContext) -> None:
     """Render the benchmark settlement that illustrates the decline."""
     row = ctx.decline_yardstick
@@ -132,9 +117,8 @@ def render_decline_contribution(ctx: OverviewPageContext) -> None:
 def render_growth_decline_count(ctx: OverviewPageContext) -> None:
     """Render the headline counts of growing and declining settlements."""
     counts = ctx.direction_counts
-    c1, c2 = st.columns(2)
-    c1.metric("📈 Settlements grew", counts["Growth"])
-    c2.metric("📉 Settlements declined", counts["Decline"])
+    st.metric("📈 Settlements grew", counts["Growth"])
+    st.metric("📉 Settlements declined", counts["Decline"])
 
 
 def render_growth_decline_summary(ctx: OverviewPageContext) -> None:
@@ -197,7 +181,6 @@ def render_growth_decline_by_year(ctx: OverviewPageContext) -> None:
 def main() -> None:
     """Render the full overview page."""
     ctx = get_context(
-        concentration_n=CONCENTRATION_N,
         top_bottom_n=TOP_BOTTOM_N,
         n_decline_contribution=N_DECLINE_CONTRIBUTION,
     )
@@ -213,12 +196,14 @@ def main() -> None:
 
     st.divider()
 
-    render_decline_contribution(ctx)
-    render_growth_decline_count(ctx)
-    render_growth_decline_summary(ctx)
-    render_growth_decline_by_year(ctx)
+    wide, narrow = st.columns([1.618, 1])
+    with wide:
+        render_growth_decline_summary(ctx)
+    with narrow:
+        render_decline_contribution(ctx)
+        render_growth_decline_count(ctx)
 
-    render_concentration_teaser(ctx)
+    render_growth_decline_by_year(ctx)
 
 
 main()
