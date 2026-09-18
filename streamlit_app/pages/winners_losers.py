@@ -11,11 +11,17 @@ from hpm.ui.context import build_change_context, ChangePageContext
 N_DECLINE_CONTRIBUTION = 50
 
 
+COLOR_RED = "#d62728"
+COLOR_YELLOW = "#f4c542"
+COLOR_GREEN = "#2ca02c"
+
 RELATIVE_CATEGORY_COLORS = {
-    "Growing": "#2ca02c",
-    "Declining slower than national average": "#f4c542",
-    "Declining faster than national average": "#d62728",
+    "Growing": COLOR_GREEN,
+    "Declining slower than national average": COLOR_YELLOW,
+    "Declining faster than national average": COLOR_RED,
 }
+
+DIVERGING_SCALE = [COLOR_RED, COLOR_YELLOW, COLOR_GREEN]
 
 
 @st.cache_data()
@@ -159,29 +165,71 @@ def render_leaderboard(ctx: ChangePageContext) -> None:
         st.dataframe(gainers, hide_index=True, width="stretch")
 
 
+MAP_MODES = {
+    "Relative to national": {
+        "color": "relative_category",
+        "color_discrete_map": RELATIVE_CATEGORY_COLORS,
+        "title": "Settlement performance, {first_year} → {last_year}",
+        "caption": (
+            "Settlements are colored by how they compare to the national "
+            "baseline, not raw magnitude — so a village losing population "
+            "slower than the national average still reads as 'doing OK'."
+        ),
+    },
+    "Percent magnitude": {
+        "color": "pct_change",
+        "color_continuous_scale": DIVERGING_SCALE,
+        "color_continuous_midpoint": 0,
+        "range_color": [-10, 10],
+        "title": "Settlement performance by magnitude, {first_year} → {last_year}",
+        "caption": (
+            "Ignores the national baseline entirely — color reflects each "
+            "settlement's own percentage change directly, so the deepest "
+            "reds and greens are the most extreme movers in relative terms."
+        ),
+    },
+    "Absolute headcount": {
+        "color": "abs_change",
+        "color_continuous_scale": DIVERGING_SCALE,
+        "color_continuous_midpoint": 0,
+        "range_color": [-1000, 1000],
+        "title": "Settlement performance by headcount, {first_year} → {last_year}",
+        "caption": (
+            "Colored by raw population gained or lost, not percentage — "
+            "this is where the national decline's actual bodies are "
+            "concentrated. A big city losing 1% can outweigh a village "
+            "losing 50%."
+        ),
+    },
+}
+
+
 def render_map(ctx: ChangePageContext) -> None:
-    """Render the settlement map colored by relative performance."""
-    st.subheader("Map: performance relative to the national trend")
-    st.caption(
-        f"National change over this period: {ctx.national_pct_change:.1f}%. "
-        "Settlements are colored by how they compare to that baseline, not "
-        "raw magnitude — so a village losing population slower than the "
-        "national average still reads as 'doing OK'."
-    )
+    """Render the settlement map, colored by a user-selectable lens."""
+    st.subheader("Map: settlement performance")
+    mode = st.radio("Color by", list(MAP_MODES), horizontal=True)
+    settings = MAP_MODES[mode]
+
+    st.caption(settings["caption"])
 
     fig = px.choropleth_map(
         ctx.change_with_category,
         geojson=ctx.app.settlement_geojson,
         locations="settlement_name",
         featureidkey="properties.settlement_name",
-        color="relative_category",
-        color_discrete_map=RELATIVE_CATEGORY_COLORS,
+        color=settings["color"],
+        color_discrete_map=settings.get("color_discrete_map"),
+        color_continuous_scale=settings.get("color_continuous_scale"),
+        color_continuous_midpoint=settings.get("color_continuous_midpoint"),
+        range_color=settings.get("range_color"),
         center={"lat": 47.1625, "lon": 19.5033},
         zoom=6,
         height=650,
-        title=f"Settlement performance, {ctx.app.first_year} → {ctx.app.last_year}",
+        title=settings["title"].format(
+            first_year=ctx.app.first_year, last_year=ctx.app.last_year
+        ),
         hover_name="settlement_name",
-        hover_data={"pct_change": ":.1f", "abs_change": ":,.0f"}
+        hover_data={"pct_change": ":.1f", "abs_change": ":,.0f"},
     )
 
     fig.update_layout(
