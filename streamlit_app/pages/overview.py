@@ -1,55 +1,16 @@
 """Streamlit page for the overview narrative of Hungary's population changes."""
 
-from collections.abc import Callable
-
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from shared import get_app_data, warm_cached_properties, RELATIVE_CATEGORY_COLORS, DIVERGING_SCALE
+from shared import get_app_data, warm_cached_properties
 from hpm.ui.context import build_overview_context, OverviewPageContext
 
 # Editorial constants
 CONCENTRATION_N = 50
 TOP_BOTTOM_N = 10
 N_DECLINE_CONTRIBUTION = 50
-
-COUNTY_MAP_MODES = {
-    "Relative to national": {
-        "data": "county_change_with_category",
-        "color": "relative_category",
-        "color_discrete_map": RELATIVE_CATEGORY_COLORS,
-        "title": "County performance, {first_year} → {last_year}",
-        "caption": (
-            "Counties are colored by how they compare to the national "
-            "baseline, not raw magnitude — so a county losing population "
-            "slower than the national average still reads as 'doing OK'."
-        ),
-    },
-    "Percent magnitude": {
-        "data": "county_change",
-        "color": "pct_change",
-        "color_continuous_scale": DIVERGING_SCALE,
-        "color_continuous_midpoint": 0,
-        "title": "County performance by magnitude, {first_year} → {last_year}",
-        "caption": (
-            "Ignores the national baseline entirely — color reflects each "
-            "county's own percentage change directly."
-        ),
-    },
-    "Absolute headcount": {
-        "data": "county_change",
-        "color": "abs_change",
-        "color_continuous_scale": DIVERGING_SCALE,
-        "color_continuous_midpoint": 0,
-        "title": "County performance by headcount, {first_year} → {last_year}",
-        "caption": (
-            "Colored by raw population gained or lost, not percentage — "
-            "this is where the national decline's actual bodies are "
-            "concentrated."
-        ),
-    },
-}
 
 
 @st.cache_data()
@@ -233,57 +194,6 @@ def render_growth_decline_by_year(ctx: OverviewPageContext) -> None:
     st.plotly_chart(fig, width="stretch")
 
 
-def render_map(ctx: OverviewPageContext) -> None:
-    """Render the county-level choropleth map, colored by a user-selectable lens."""
-    mode = st.radio("Color by", list(COUNTY_MAP_MODES), horizontal=True)
-    settings = COUNTY_MAP_MODES[mode]
-
-    st.caption(settings["caption"])
-
-    fig = px.choropleth_map(
-        getattr(ctx, settings["data"]),
-        geojson=ctx.county_geojson,
-        locations="county_name",
-        featureidkey="properties.county_name",
-        color=settings["color"],
-        color_discrete_map=settings.get("color_discrete_map"),
-        color_continuous_scale=settings.get("color_continuous_scale"),
-        color_continuous_midpoint=settings.get("color_continuous_midpoint"),
-        range_color=settings.get("range_color"),
-        center={"lat": 47.1625, "lon": 19.5033},
-        zoom=6,
-        height=650,
-        hover_name="county_name",
-        title=settings["title"].format(
-            first_year=ctx.app.first_year, last_year=ctx.app.last_year
-        ),
-    )
-
-    fig.update_layout(
-        map_style="carto-positron",
-        margin={"r": 0, "t": 40, "l": 0, "b": 0},
-    )
-
-    st.plotly_chart(fig, width="stretch", theme="streamlit")
-
-
-def render_section(
-    title: str,
-    fn: Callable[[OverviewPageContext], None],
-    ctx: OverviewPageContext,
-) -> None:
-    """Render a titled section with a shared divider.
-
-    Args:
-        title: The section heading displayed to the user.
-        fn: The renderer function for the section body.
-        ctx: The context object supplied to the renderer.
-    """
-    st.subheader(title)
-    fn(ctx)
-    st.divider()
-
-
 def main() -> None:
     """Render the full overview page."""
     ctx = get_context(
@@ -308,9 +218,6 @@ def main() -> None:
     render_growth_decline_summary(ctx)
     render_growth_decline_by_year(ctx)
 
-    st.divider()
-
-    render_section("🗺️ Growing vs. shrinking", render_map, ctx)
     render_concentration_teaser(ctx)
 
 

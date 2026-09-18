@@ -140,11 +140,86 @@ def render_map(ctx: ChangePageContext) -> None:
     st.plotly_chart(fig, width="stretch", theme="streamlit")
 
 
+COUNTY_MAP_MODES = {
+    "Relative to national": {
+        "data": "county_change_with_category",
+        "color": "relative_category",
+        "color_discrete_map": RELATIVE_CATEGORY_COLORS,
+        "title": "County performance, {first_year} → {last_year}",
+        "caption": (
+            "Counties are colored by how they compare to the national "
+            "baseline, not raw magnitude — so a county losing population "
+            "slower than the national average still reads as 'doing OK'."
+        ),
+    },
+    "Percent magnitude": {
+        "data": "county_change",
+        "color": "pct_change",
+        "color_continuous_scale": DIVERGING_SCALE,
+        "color_continuous_midpoint": 0,
+        "title": "County performance by magnitude, {first_year} → {last_year}",
+        "caption": (
+            "Ignores the national baseline entirely — color reflects each "
+            "county's own percentage change directly."
+        ),
+    },
+    "Absolute headcount": {
+        "data": "county_change",
+        "color": "abs_change",
+        "color_continuous_scale": DIVERGING_SCALE,
+        "color_continuous_midpoint": 0,
+        "title": "County performance by headcount, {first_year} → {last_year}",
+        "caption": (
+            "Colored by raw population gained or lost, not percentage — "
+            "this is where the national decline's actual bodies are "
+            "concentrated."
+        ),
+    },
+}
+
+
+def render_county_map(ctx: ChangePageContext) -> None:
+    """Render the county-level choropleth map, colored by a user-selectable lens."""
+    st.subheader("Map: county performance")
+    mode = st.radio("Color by", list(COUNTY_MAP_MODES), horizontal=True, key="county_map_mode")
+    settings = COUNTY_MAP_MODES[mode]
+
+    st.caption(settings["caption"])
+
+    fig = px.choropleth_map(
+        getattr(ctx, settings["data"]),
+        geojson=ctx.county_geojson,
+        locations="county_name",
+        featureidkey="properties.county_name",
+        color=settings["color"],
+        color_discrete_map=settings.get("color_discrete_map"),
+        color_continuous_scale=settings.get("color_continuous_scale"),
+        color_continuous_midpoint=settings.get("color_continuous_midpoint"),
+        range_color=settings.get("range_color"),
+        center={"lat": 47.1625, "lon": 19.5033},
+        zoom=6,
+        height=650,
+        hover_name="county_name",
+        title=settings["title"].format(
+            first_year=ctx.app.first_year, last_year=ctx.app.last_year
+        ),
+    )
+
+    fig.update_layout(
+        map_style="carto-positron",
+        margin={"r": 0, "t": 40, "l": 0, "b": 0},
+    )
+
+    st.plotly_chart(fig, width="stretch", theme="streamlit")
+
+
 def main() -> None:
     """Render the full winners-and-losers page."""
     ctx = get_context()
 
     render_thesis()
+    render_county_map(ctx)
+    st.divider()
     render_map(ctx)
     st.divider()
     render_leaderboard(ctx)

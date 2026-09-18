@@ -152,23 +152,6 @@ class OverviewPageContext:
         )
 
     @cached_property
-    def county_change(self) -> pd.DataFrame:
-        """Return county-level population change percentages."""
-        return county_population_change(
-            self.app.df, self.app.first_year, self.app.last_year
-        )
-
-    @cached_property
-    def county_geojson(self) -> dict:
-        """Return the county boundary GeoJSON for mapping."""
-        return county_boundaries()
-
-    @cached_property
-    def county_change_with_category(self) -> pd.DataFrame:
-        """Return county-level changes annotated with relative category labels."""
-        return relative_change_category(self.county_change, self.metrics.change_pct)
-
-    @cached_property
     def change(self) -> pd.DataFrame:
         """Return settlement-level change data across the observation window."""
         return settlement_change(self.app.df, self.app.first_year, self.app.last_year)
@@ -261,6 +244,23 @@ class ChangePageContext:
     def change_with_category(self) -> pd.DataFrame:
         """Return settlement changes annotated with relative category labels."""
         return relative_change_category(self.change, self.national_pct_change)
+
+    @cached_property
+    def county_change(self) -> pd.DataFrame:
+        """Return county-level population change percentages."""
+        return county_population_change(
+            self.app.df, self.app.first_year, self.app.last_year
+        )
+
+    @cached_property
+    def county_geojson(self) -> dict:
+        """Return the county boundary GeoJSON for mapping."""
+        return county_boundaries()
+
+    @cached_property
+    def county_change_with_category(self) -> pd.DataFrame:
+        """Return county-level changes annotated with relative category labels."""
+        return relative_change_category(self.county_change, self.national_pct_change)
 
 
 def build_change_context(app: AppData) -> ChangePageContext:
