@@ -4,6 +4,19 @@ import streamlit as st
 
 from hpm.ui.context import load_app_data, AppData
 
+COLOR_RED = "#d62728"
+COLOR_YELLOW = "#f4c542"
+COLOR_GREEN = "#2ca02c"
+
+RELATIVE_CATEGORY_COLORS = {
+    "Growing": COLOR_GREEN,
+    "Declining slower than national average": COLOR_YELLOW,
+    "Declining faster than national average": COLOR_RED,
+}
+
+DIVERGING_SCALE = [COLOR_RED, COLOR_YELLOW, COLOR_GREEN]
+
+
 @st.cache_data()
 def get_app_data() -> AppData:
     """Return the application's shared dataset

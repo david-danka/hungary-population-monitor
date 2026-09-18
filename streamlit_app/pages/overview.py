@@ -5,24 +5,12 @@ from collections.abc import Callable
 import plotly.express as px
 import streamlit as st
 
-from shared import get_app_data, warm_cached_properties
+from shared import get_app_data, warm_cached_properties, RELATIVE_CATEGORY_COLORS, DIVERGING_SCALE
 from hpm.ui.context import build_overview_context, OverviewPageContext
 
 # Editorial constants
 CONCENTRATION_N = 50
 TOP_BOTTOM_N = 10
-
-RELATIVE_CATEGORY_COLORS = {
-    "Growing": "#2ca02c",
-    "Declining slower than national average": "#f4c542",
-    "Declining faster than national average": "#d62728",
-}
-
-DIVERGING_SCALE = [
-    RELATIVE_CATEGORY_COLORS["Declining faster than national average"],
-    RELATIVE_CATEGORY_COLORS["Declining slower than national average"],
-    RELATIVE_CATEGORY_COLORS["Growing"],
-]
 
 COUNTY_MAP_MODES = {
     "Relative to national": {

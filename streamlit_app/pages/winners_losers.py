@@ -4,24 +4,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from shared import get_app_data, warm_cached_properties
+from shared import get_app_data, warm_cached_properties, RELATIVE_CATEGORY_COLORS, DIVERGING_SCALE
 from hpm.ui.context import build_change_context, ChangePageContext
 
 # Editorial constants, not exposed to users
 N_DECLINE_CONTRIBUTION = 50
-
-
-COLOR_RED = "#d62728"
-COLOR_YELLOW = "#f4c542"
-COLOR_GREEN = "#2ca02c"
-
-RELATIVE_CATEGORY_COLORS = {
-    "Growing": COLOR_GREEN,
-    "Declining slower than national average": COLOR_YELLOW,
-    "Declining faster than national average": COLOR_RED,
-}
-
-DIVERGING_SCALE = [COLOR_RED, COLOR_YELLOW, COLOR_GREEN]
 
 
 @st.cache_data()
